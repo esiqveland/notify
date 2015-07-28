@@ -7,15 +7,18 @@ import (
 	"github.com/godbus/dbus"
 )
 
-// This package is a wrapper around godbus for notification handling
+// This package is a wrapper around godbus for dbus notification interface
 // See: https://developer.gnome.org/notification-spec/
 //
 // Each notification displayed is allocated a unique ID by the server. (see Notify)
-// This is unique within the dbus session. While the notification server is running,
+// This ID unique within the dbus session. While the notification server is running,
 // the ID will not be recycled unless the capacity of a uint32 is exceeded.
+//
 // This can be used to hide the notification before the expiration timeout is reached. (see CloseNotification)
-// It can also be used to atomically replace the notification with another (Notification.ReplaceID).
+//
+// The ID can also be used to atomically replace the notification with another (Notification.ReplaceID).
 // This allows you to (for instance) modify the contents of a notification while it's on-screen.
+//
 const (
 	objectPath                 = "/org/freedesktop/Notifications" // the DBUS object path
 	dbusNotificationsInterface = "org.freedesktop.Notifications"  // DBUS Interface
@@ -25,12 +28,14 @@ const (
 	getServerInformation       = "org.freedesktop.Notifications.GetServerInformation"
 )
 
+// New creates a new Notificator using conn
 func New(conn *dbus.Conn) Notificator {
 	return &Notifier{
 		conn: conn,
 	}
 }
 
+// Notifier implements Notificator
 type Notifier struct {
 	conn *dbus.Conn
 }
@@ -38,10 +43,6 @@ type Notifier struct {
 // GetCapabilities gets the capabilities of the notification server.
 // This call takes no parameters.
 // It returns an array of strings. Each string describes an optional capability implemented by the server.
-//
-// Implements dbus call:
-//
-// STRING_ARRAY org.freedesktop.Notifications.GetCapabilities ()
 //
 // See also: https://developer.gnome.org/notification-spec/
 func (self *Notifier) GetCapabilities() ([]string, error) {
@@ -60,16 +61,16 @@ func (self *Notifier) GetCapabilities() ([]string, error) {
 	return ret, nil
 }
 
+// AskCapabilities is interface for GetCapabilities (see there)
 type AskCapabilities interface {
 	GetCapabilities() ([]string, error)
 }
 
-// org.freedesktop.Notifications.CloseNotification
-// void org.freedesktop.Notifications.CloseNotification ( id )
-//														 UINT32 id;
+// CloseNotification causes a notification to be forcefully closed and removed from the user's view.
+// It can be used, for example, in the event that what the notification pertains to is no longer relevant,
+// or to cancel a notification with no expiration time.
 //
-// Causes a notification to be forcefully closed and removed from the user's view. It can be used, for example, in the event that what the notification pertains to is no longer relevant, or to cancel a notification with no expiration time.
-// The NotificationClosed signal is emitted by this method.
+// The NotificationClosed (dbus) signal is emitted by this method.
 // If the notification no longer exists, an empty D-BUS Error message is sent back.
 func (self *Notifier) CloseNotification(id int) (bool, error) {
 	obj := self.conn.Object(dbusNotificationsInterface, objectPath)
@@ -94,8 +95,7 @@ type ServerInformation struct {
 	SpecVersion string
 }
 
-// GetServerInformation
-// This message returns the information on the server. Specifically, the server name, vendor, and version number.
+// GetServerInformation returns the information on the server.
 //
 // org.freedesktop.Notifications.GetServerInformation
 //
@@ -106,6 +106,7 @@ type ServerInformation struct {
 //		vendor		 STRING	  The vendor name. For example, "KDE," "GNOME," "freedesktop.org," or "Microsoft."
 //		version		 STRING	  The server's version number.
 //		spec_version STRING	  The specification version the server is compliant with.
+//
 func (self *Notifier) GetServerInformation() (ServerInformation, error) {
 	obj := self.conn.Object(dbusNotificationsInterface, objectPath)
 	if obj == nil {
@@ -131,7 +132,7 @@ type ServerInformator interface {
 	GetServerInformation() (ServerInformation, error)
 }
 
-// Sends a notification to the notification server.
+// SendNotification sends a notification to the notification server.
 // Implements dbus call:
 //
 // UINT32 org.freedesktop.Notifications.Notify ( STRING app_name,
@@ -142,8 +143,6 @@ type ServerInformator interface {
 //												 ARRAY  actions,
 //												 DICT   hints,
 //												 INT32  expire_timeout);
-//
-//		Table 6. Notify Parameters
 //
 //		 Name	    	Type	Description
 //		 app_name		STRING	The optional name of the application sending the notification. Can be blank.
@@ -156,12 +155,13 @@ type ServerInformator interface {
 //       expire_timeout INT32   The timeout time in milliseconds since the display of the notification at which the notification should automatically close.
 //								If -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
 //
-//If replaces_id is 0, the return value is a UINT32 that represent the notification. It is unique, and will not be reused unless a MAXINT number of notifications have been generated. An acceptable implementation may just use an incrementing counter for the ID. The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
-//If replaces_id is not 0, the returned value is the same value as replaces_id.
+// If replaces_id is 0, the return value is a UINT32 that represent the notification. It is unique, and will not be reused unless a MAXINT number of notifications have been generated. An acceptable implementation may just use an incrementing counter for the ID. The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
+// If replaces_id is not 0, the returned value is the same value as replaces_id.
 func (self *Notifier) SendNotification(n Notification) (uint32, error) {
 	return SendNotification(self.conn, n)
 }
 
+// SendNotification is same as Notifier.SendNotification
 func SendNotification(conn *dbus.Conn, n Notification) (uint32, error) {
 	obj := conn.Object(dbusNotificationsInterface, objectPath)
 	call := obj.Call(notify, 0,
