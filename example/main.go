@@ -16,7 +16,7 @@ func main() {
 		panic(err)
 	}
 
-	notificator := notify.NewNotifier(conn)
+	notificator := notify.New(conn)
 
 	n := notify.Notification{
 		AppName:       "Test GO App",
@@ -51,4 +51,8 @@ func main() {
 	fmt.Printf("Vendor:  %v\n", info.Vendor)
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
+
+	// And there is a helper for just sending notifications directly:
+	notify.SendNotification(conn, n)
+
 }

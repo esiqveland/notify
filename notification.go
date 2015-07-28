@@ -25,7 +25,7 @@ const (
 	getServerInformation       = "org.freedesktop.Notifications.GetServerInformation"
 )
 
-func NewNotifier(conn *dbus.Conn) Notificator {
+func New(conn *dbus.Conn) Notificator {
 	return &Notifier{
 		conn: conn,
 	}

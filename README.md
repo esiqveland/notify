@@ -23,19 +23,17 @@ import (
 )
 
 func main() {
-	iconName := "mail-unread"
-
 	conn, err := dbus.SessionBus()
 	if err != nil {
 		panic(err)
 	}
-
-	notifier := notify.NewNotifier(conn)
-
+	
+	notifier := notify.New(conn)
+	
 	n := notify.Notification{
 		AppName:       "Test GO App",
 		ReplacesID:    uint32(0),
-		AppIcon:       iconName,
+		AppIcon:       "mail-unread",
 		Summary:       "Test",
 		Body:          "This is a test of the DBus bindings for go.",
 		Actions:       []string{},
@@ -48,6 +46,11 @@ func main() {
 		panic(err)
 	}
 	log.Printf("sent notification id: %v", id)
+	
+	// And there is a helper for just sending notifications directly:
+	notify.SendNotification(conn, n)
+}
+
 ```
 
 You should now have gotten this notification delivered to your desktop.
@@ -55,7 +58,7 @@ You should now have gotten this notification delivered to your desktop.
 #### TODO
 
 - [ ] Add callback support aka dbus signals?
-- [ ] Tests. I am very interested in any ideas for writing some (useful) tests for this
+- [ ] Tests. I am very interested in any ideas for writing some (useful) tests for this.
 
 #### See also
 
