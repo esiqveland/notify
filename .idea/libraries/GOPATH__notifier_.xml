@@ -1,0 +1,67 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;notifier&gt;">
+    <CLASSES>
+      <root url="file://$USER_HOME$/src/gopath/src/github.com" />
+      <root url="file://$USER_HOME$/src/gopath/src/speter.net" />
+      <root url="file://$USER_HOME$/src/gopath/src/gopkg.in" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org" />
+    </CLASSES>
+    <SOURCES />
+    <excluded>
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/queuetutor/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/lib/pq/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/gorilla/mux/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/stretchr/testify/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/otiai10/mint/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/smartystreets/assertions/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/gopkg.in/yaml.v2/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/mattes/migrate/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/cenkalti/backoff/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/den/.idea" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org/x/net/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/go-sql-driver/mysql/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/httpfault/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/gopkg.in/check.v1/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/den/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/smartystreets/goconvey/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org/x/net/html/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/dancannon/gorethink/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/gocql/gocql/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/Sirupsen/logrus/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/golang/snappy/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/gosseract/.samples" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org/x/net/html/charset/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/gosseract/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/golang/groupcache/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/mattn/go-sqlite3/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/golang/protobuf/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org/x/oauth2/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/gocql/gocql/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/notify/.idea" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/mattn/go-sqlite3/_example" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/jtolds/gls/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/otiai10/gosseract/.samples" />
+      <root url="file://$USER_HOME$/src/gopath/src/golang.org/x/oauth2/google/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/godbus/dbus/_examples" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/gosseract/.idea" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/otiai10/gosseract/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/golang/protobuf/proto/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/gorilla/context/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/shiena/ansicolor/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/fatih/color/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/picnic-api/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/ioweyou-api/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/godbus/dbus/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/speter.net/go/exp/math/dec/inf/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/gopkg.in/gorp.v1/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/notify" />
+      <root url="file://$USER_HOME$/src/gopath/src/gopkg.in/dancannon/gorethink.v1/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/esiqveland/ioweyou-api/.idea" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/stretchr/objx/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/golang/protobuf/protoc-gen-go/testdata" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/conformal/gotk3/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/codegangsta/negroni/.git" />
+      <root url="file://$USER_HOME$/src/gopath/src/github.com/gorilla/handlers/.git" />
+    </excluded>
+  </library>
+</component>
