@@ -53,8 +53,9 @@ func main() {
 You should now have gotten this notification delivered to your desktop.
 
 #### TODO
-[] Add callback support aka dbus signals?
-[] Tests. I am very interested in any ideas for writing some (useful) tests for this
+
+- [ ] Add callback support aka dbus signals?
+- [ ] Tests. I am very interested in any ideas for writing some (useful) tests for this
 
 #### See also
 
