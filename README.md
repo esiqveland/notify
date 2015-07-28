@@ -1,4 +1,4 @@
-# `notify`
+### `notify`
 
 Notify is a go library for interacting with the dbus notification service defined here:
 https://developer.gnome.org/notification-spec/
@@ -10,7 +10,7 @@ More tester are very welcome =)
 
 Depends on github.com/godbus/dbus.
 
-## Quick intro
+#### Quick intro
 
 ```go
 package main
