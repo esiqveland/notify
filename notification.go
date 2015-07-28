@@ -1,9 +1,10 @@
 package notify
 
 import (
-	"github.com/godbus/dbus"
-	"log"
 	"errors"
+	"log"
+
+	"github.com/godbus/dbus"
 )
 
 // This package is a wrapper around godbus for notification handling
@@ -183,6 +184,7 @@ func SendNotification(conn *dbus.Conn, n Notification) (uint32, error) {
 	}
 	return ret, nil
 }
+
 // Notifyer is an interface for implementing SendNotification
 type Notifyer interface {
 	SendNotification(n Notification) (uint32, error)

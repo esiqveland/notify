@@ -1,10 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus"
-	"log"
-	"fmt"
 )
 
 func main() {
