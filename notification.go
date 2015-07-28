@@ -157,11 +157,11 @@ type ServerInformator interface {
 //
 //If replaces_id is 0, the return value is a UINT32 that represent the notification. It is unique, and will not be reused unless a MAXINT number of notifications have been generated. An acceptable implementation may just use an incrementing counter for the ID. The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
 //If replaces_id is not 0, the returned value is the same value as replaces_id.
-func (self *Notifier) SendNotification(n Notification) (int, error) {
+func (self *Notifier) SendNotification(n Notification) (uint32, error) {
 	return SendNotification(self.conn, n)
 }
 
-func SendNotification(conn *dbus.Conn, n Notification) (int, error) {
+func SendNotification(conn *dbus.Conn, n Notification) (uint32, error) {
 	obj := conn.Object(dbusNotificationsInterface, objectPath)
 	call := obj.Call(notify, 0,
 		n.AppName,
@@ -179,13 +179,13 @@ func SendNotification(conn *dbus.Conn, n Notification) (int, error) {
 	err := call.Store(&ret)
 	if err != nil {
 		log.Printf("error getting uint32 ret value: %v", err)
-		return int(ret), err
+		return ret, err
 	}
-	return int(ret), nil
+	return ret, nil
 }
 // Notifyer is an interface for implementing SendNotification
 type Notifyer interface {
-	SendNotification(n Notification) (int, error)
+	SendNotification(n Notification) (uint32, error)
 }
 
 // Notification holds all information needed for creating a notification
