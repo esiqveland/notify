@@ -1,12 +1,6 @@
 package notify
 
-import (
-	"errors"
-	"log"
-
-	"github.com/godbus/dbus"
-)
-
+// 
 // This package is a wrapper around godbus for dbus notification interface
 // See: https://developer.gnome.org/notification-spec/
 //
@@ -19,6 +13,13 @@ import (
 // The ID can also be used to atomically replace the notification with another (Notification.ReplaceID).
 // This allows you to (for instance) modify the contents of a notification while it's on-screen.
 //
+
+import (
+	"errors"
+	"log"
+
+	"github.com/godbus/dbus"
+)
 const (
 	objectPath                 = "/org/freedesktop/Notifications" // the DBUS object path
 	dbusNotificationsInterface = "org.freedesktop.Notifications"  // DBUS Interface
