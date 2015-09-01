@@ -1,6 +1,6 @@
 package notify
 
-// 
+//
 // This package is a wrapper around godbus for dbus notification interface
 // See: https://developer.gnome.org/notification-spec/
 //
@@ -20,6 +20,7 @@ import (
 
 	"github.com/godbus/dbus"
 )
+
 const (
 	objectPath                 = "/org/freedesktop/Notifications" // the DBUS object path
 	dbusNotificationsInterface = "org.freedesktop.Notifications"  // DBUS Interface
@@ -30,7 +31,7 @@ const (
 )
 
 // New creates a new Notificator using conn
-func New(conn *dbus.Conn) Notify {
+func New(conn *dbus.Conn) Notifier {
 	return &notifier{
 		conn: conn,
 	}
@@ -52,7 +53,6 @@ type Notification struct {
 	Hints         map[string]dbus.Variant
 	ExpireTimeout int32 // millisecond to show notification
 }
-
 
 // SendNotification sends a notification to the notification server.
 // Implements dbus call:
@@ -185,30 +185,10 @@ func (self *notifier) GetServerInformation() (ServerInformation, error) {
 	return ret, nil
 }
 
-// Notifyer is an interface for implementing SendNotification
-type Notifyer interface {
-	SendNotification(n Notification) (uint32, error)
-}
-
-// ServerInformator is an interface for implementing GetServerInformation
-type ServerInformator interface {
-	GetServerInformation() (ServerInformation, error)
-}
-
-// AskCapabilities is interface for GetCapabilities (see there)
-type AskCapabilities interface {
-	GetCapabilities() ([]string, error)
-}
-
-// Closer is an interface for implementing CloseNotification call
-type Closer interface {
-	CloseNotification(id int) (bool, error)
-}
-
 // Notificator is just a holder for all the small interfaces here.
-type Notify interface {
-	Notifyer
-	AskCapabilities
-	ServerInformator
-	Closer
+type Notifier interface {
+	SendNotification(n Notification) (uint32, error)
+	GetCapabilities() ([]string, error)
+	GetServerInformation() (ServerInformation, error)
+	CloseNotification(id int) (bool, error)
 }
