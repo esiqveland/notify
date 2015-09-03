@@ -1,5 +1,7 @@
 # notify
 
+[![GoDoc](https://godoc.org/github.com/esiqveland/notify?status.svg)](https://godoc.org/github.com/esiqveland/notify)
+
 Notify is a go library for interacting with the dbus notification service defined here:
 https://developer.gnome.org/notification-spec/
 

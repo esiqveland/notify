@@ -1,19 +1,5 @@
 package notify
 
-//
-// This package is a wrapper around godbus for dbus notification interface
-// See: https://developer.gnome.org/notification-spec/
-//
-// Each notification displayed is allocated a unique ID by the server. (see Notify)
-// This ID unique within the dbus session. While the notification server is running,
-// the ID will not be recycled unless the capacity of a uint32 is exceeded.
-//
-// This can be used to hide the notification before the expiration timeout is reached. (see CloseNotification)
-//
-// The ID can also be used to atomically replace the notification with another (Notification.ReplaceID).
-// This allows you to (for instance) modify the contents of a notification while it's on-screen.
-//
-
 import (
 	"errors"
 	"log"
@@ -79,23 +65,23 @@ type Notification struct {
 //
 // If replaces_id is 0, the return value is a UINT32 that represent the notification. It is unique, and will not be reused unless a MAXINT number of notifications have been generated. An acceptable implementation may just use an incrementing counter for the ID. The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
 // If replaces_id is not 0, the returned value is the same value as replaces_id.
-func (self *notifier) SendNotification(n Notification) (uint32, error) {
-	return SendNotification(self.conn, n)
+func (n *notifier) SendNotification(note Notification) (uint32, error) {
+	return SendNotification(n.conn, note)
 }
 
 // SendNotification is same as Notifier.SendNotification
 // Provided for convenience.
-func SendNotification(conn *dbus.Conn, n Notification) (uint32, error) {
+func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 	obj := conn.Object(dbusNotificationsInterface, objectPath)
 	call := obj.Call(notify, 0,
-		n.AppName,
-		n.ReplacesID,
-		n.AppIcon,
-		n.Summary,
-		n.Body,
-		n.Actions,
-		n.Hints,
-		n.ExpireTimeout)
+		note.AppName,
+		note.ReplacesID,
+		note.AppIcon,
+		note.Summary,
+		note.Body,
+		note.Actions,
+		note.Hints,
+		note.ExpireTimeout)
 	if call.Err != nil {
 		return 0, call.Err
 	}
@@ -113,8 +99,8 @@ func SendNotification(conn *dbus.Conn, n Notification) (uint32, error) {
 // It returns an array of strings. Each string describes an optional capability implemented by the server.
 //
 // See also: https://developer.gnome.org/notification-spec/
-func (self *notifier) GetCapabilities() ([]string, error) {
-	obj := self.conn.Object(dbusNotificationsInterface, objectPath)
+func (n *notifier) GetCapabilities() ([]string, error) {
+	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
 	call := obj.Call(getCapabilities, 0)
 	if call.Err != nil {
 		log.Printf("error calling GetCapabilities: %v", call.Err)
@@ -135,8 +121,8 @@ func (self *notifier) GetCapabilities() ([]string, error) {
 //
 // The NotificationClosed (dbus) signal is emitted by this method.
 // If the notification no longer exists, an empty D-BUS Error message is sent back.
-func (self *notifier) CloseNotification(id int) (bool, error) {
-	obj := self.conn.Object(dbusNotificationsInterface, objectPath)
+func (n *notifier) CloseNotification(id int) (bool, error) {
+	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
 	call := obj.Call(closeNotification, 0, uint32(id))
 	if call.Err != nil {
 		return false, call.Err
@@ -165,8 +151,8 @@ type ServerInformation struct {
 //		version		 STRING	  The server's version number.
 //		spec_version STRING	  The specification version the server is compliant with.
 //
-func (self *notifier) GetServerInformation() (ServerInformation, error) {
-	obj := self.conn.Object(dbusNotificationsInterface, objectPath)
+func (n *notifier) GetServerInformation() (ServerInformation, error) {
+	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
 	if obj == nil {
 		return ServerInformation{}, errors.New("error creating dbus call object")
 	}
@@ -185,7 +171,8 @@ func (self *notifier) GetServerInformation() (ServerInformation, error) {
 	return ret, nil
 }
 
-// Notificator is just a holder for all the small interfaces here.
+// Notifier is an interface for implementing the operations supported by the
+// freedesktop DBus Notifications object.
 type Notifier interface {
 	SendNotification(n Notification) (uint32, error)
 	GetCapabilities() ([]string, error)
