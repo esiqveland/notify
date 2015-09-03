@@ -1,7 +1,6 @@
 
 /*
-
-notify package is a wrapper around godbus for dbus notification interface
+The notify package is a wrapper around godbus for dbus notification interface
 See: https://developer.gnome.org/notification-spec/ and
 https://github.com/godbus/dbus
 
@@ -13,7 +12,6 @@ This can be used to hide the notification before the expiration timeout is reach
 
 The ID can also be used to atomically replace the notification with another (Notification.ReplaceID).
 This allows you to (for instance) modify the contents of a notification while it's on-screen.
-
 */
 
 package notify
