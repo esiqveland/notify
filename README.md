@@ -23,7 +23,6 @@ import (
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus"
 	"log"
-	"fmt"
 )
 
 func main() {
