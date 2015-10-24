@@ -18,9 +18,14 @@ const (
 
 // New creates a new Notificator using conn
 func New(conn *dbus.Conn) Notifier {
-	return &notifier{
+	n := &notifier{
 		conn: conn,
 	}
+
+	n.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0,
+		"type='signal',path='"+objectPath+"',interface='"+dbusNotificationsInterface+"'")
+
+	return n
 }
 
 // notifier implements Notificator
@@ -171,6 +176,56 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 	return ret, nil
 }
 
+type NotificationClosedSignal struct {
+	Id uint32
+	Reason uint32
+}
+
+func (n *notifier) NotificationClosed(closed chan<- *NotificationClosedSignal) {
+	c := make(chan *dbus.Signal, len(closed))
+
+	go (func() {
+		for {
+			signal := <-c
+			if signal.Name != dbusNotificationsInterface+".NotificationClosed" {
+				continue
+			}
+
+			closed <- &NotificationClosedSignal{
+				Id: signal.Body[0].(uint32),
+				Reason: signal.Body[1].(uint32),
+			}
+		}
+	})()
+
+	n.conn.Signal(c)
+}
+
+type ActionInvokedSignal struct {
+	Id uint32
+	ActionKey string
+}
+
+func (n *notifier) ActionInvoked(action chan<- *ActionInvokedSignal) {
+	c := make(chan *dbus.Signal, len(action))
+
+	go (func() {
+		for {
+			signal := <-c
+			if signal.Name != dbusNotificationsInterface+".ActionInvoked" {
+				continue
+			}
+
+			action <- &ActionInvokedSignal{
+				Id: signal.Body[0].(uint32),
+				ActionKey: signal.Body[1].(string),
+			}
+		}
+	})()
+
+	n.conn.Signal(c)
+}
+
 // Notifier is an interface for implementing the operations supported by the
 // freedesktop DBus Notifications object.
 type Notifier interface {
@@ -178,4 +233,6 @@ type Notifier interface {
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
 	CloseNotification(id int) (bool, error)
+	NotificationClosed(closed chan<- *NotificationClosedSignal)
+	ActionInvoked(action chan<- *ActionInvokedSignal)
 }
