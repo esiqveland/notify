@@ -17,6 +17,7 @@ func main() {
 	}
 
 	notificator := notify.New(conn)
+	defer notificator.Close()
 
 	n := notify.Notification{
 		AppName:       "Test GO App",
@@ -35,6 +36,9 @@ func main() {
 	}
 	log.Printf("sent notification id: %v", id)
 
+	not := <-notificator.NotificationClosed()
+	log.Printf("NotificationClosed: %v Reason: %v", not.Id, not.Reason)
+
 	caps, err := notificator.GetCapabilities()
 	if err != nil {
 		log.Printf("error fetching capabilities: %v", err)
@@ -52,7 +56,7 @@ func main() {
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
 
-	// And there is a helper for just sending notifications directly:
-	notify.SendNotification(conn, n)
+	// And there is a helper for just sending notifications directly if you have a connection:
+	//notify.SendNotification(conn, n)
 
 }
