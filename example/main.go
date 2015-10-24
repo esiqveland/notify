@@ -16,7 +16,10 @@ func main() {
 		panic(err)
 	}
 
-	notificator := notify.New(conn)
+	notificator, err := notify.New(conn)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 	defer notificator.Close()
 
 	n := notify.Notification{

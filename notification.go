@@ -8,20 +8,22 @@ import (
 )
 
 const (
-	objectPath                    = "/org/freedesktop/Notifications" // the DBUS object path
-	dbusNotificationsInterface    = "org.freedesktop.Notifications"  // DBUS Interface
-	dbusNotificationClosed        = "org.freedesktop.Notifications.NotificationClosed"
-	dbusNotificationActionInvoked = "org.freedesktop.Notifications.ActionInvoked"
-	getCapabilities               = "org.freedesktop.Notifications.GetCapabilities"
-	closeNotification             = "org.freedesktop.Notifications.CloseNotification"
-	notify                        = "org.freedesktop.Notifications.Notify"
-	getServerInformation          = "org.freedesktop.Notifications.GetServerInformation"
+	dbusRemoveMatch                 = "org.freedesktop.DBus.RemoveMatch"
+	dbusAddMatch                    = "org.freedesktop.DBus.AddMatch"
+	objectPath                      = "/org/freedesktop/Notifications" // the DBUS object path
+	dbusNotificationsInterface      = "org.freedesktop.Notifications"  // DBUS Interface
+	signalNotificationClosed        = "org.freedesktop.Notifications.NotificationClosed"
+	signalNotificationActionInvoked = "org.freedesktop.Notifications.ActionInvoked"
+	getCapabilities                 = "org.freedesktop.Notifications.GetCapabilities"
+	closeNotification               = "org.freedesktop.Notifications.CloseNotification"
+	notify                          = "org.freedesktop.Notifications.Notify"
+	getServerInformation            = "org.freedesktop.Notifications.GetServerInformation"
 )
 
 // New creates a new Notificator using conn
 // New sets up a Notifier that listenes on dbus' signals regarding
 // Notifications, e.g.
-func New(conn *dbus.Conn) Notifier {
+func New(conn *dbus.Conn) (Notifier, error) {
 	n := &notifier{
 		conn:   conn,
 		signal: make(chan *dbus.Signal, 5),
@@ -30,8 +32,11 @@ func New(conn *dbus.Conn) Notifier {
 		done:   make(chan bool),
 	}
 
-	n.conn.BusObject().Call("org.freedesktop.DBus.AddMatch", 0,
+	call := n.conn.BusObject().Call(dbusAddMatch, 0,
 		"type='signal',path='"+objectPath+"',interface='"+dbusNotificationsInterface+"'")
+	if call.Err != nil {
+		return nil, call.Err
+	}
 
 	go (func() {
 		received := 0
@@ -40,7 +45,7 @@ func New(conn *dbus.Conn) Notifier {
 			case signal := <-n.signal:
 				received += 1
 				log.Printf("got signal: %v Signal: %+v", received, signal)
-				n.handleSignal(signal)
+				go n.handleSignal(signal)
 			// its all over, exit and go home
 			case <-n.done:
 				log.Printf("its all over, go home")
@@ -52,17 +57,17 @@ func New(conn *dbus.Conn) Notifier {
 	// setup signal reception
 	n.conn.Signal(n.signal)
 
-	return n
+	return n, nil
 }
 
 func (n notifier) handleSignal(signal *dbus.Signal) {
 	switch signal.Name {
-	case dbusNotificationClosed:
+	case signalNotificationClosed:
 		n.closer <- &NotificationClosedSignal{
 			Id:     signal.Body[0].(uint32),
 			Reason: signal.Body[1].(uint32),
 		}
-	case dbusNotificationActionInvoked:
+	case signalNotificationActionInvoked:
 		n.action <- &ActionInvokedSignal{
 			Id:        signal.Body[0].(uint32),
 			ActionKey: signal.Body[1].(string),
@@ -244,8 +249,12 @@ func (n *notifier) ActionInvoked() <-chan *ActionInvokedSignal {
 
 // Close cleans up and shuts down signal delivery loop
 func (n *notifier) Close() error {
-	// remove signal reception
+	log.Printf("closing!")
 	n.done <- true
+	n.conn.BusObject().Call(dbusRemoveMatch, 0,
+		"type='signal',path='"+objectPath+"',interface='"+dbusNotificationsInterface+"'")
+
+	// remove signal reception
 	defer n.conn.Signal(n.signal)
 	close(n.closer)
 	close(n.action)
