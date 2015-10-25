@@ -16,11 +16,11 @@ func main() {
 		panic(err)
 	}
 
-	notificator, err := notify.New(conn)
+	notifier, err := notify.New(conn)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	defer notificator.Close()
+	defer notifier.Close()
 
 	n := notify.Notification{
 		AppName:       "Test GO App",
@@ -28,21 +28,25 @@ func main() {
 		AppIcon:       iconName,
 		Summary:       "Test",
 		Body:          "This is a test of the DBus bindings for go.",
-		Actions:       []string{},
+		Actions:       []string{"cancel", "Cancel", "open", "Open"}, // tuples of (action_key, label)
 		Hints:         map[string]dbus.Variant{},
 		ExpireTimeout: int32(5000),
 	}
 
-	id, err := notificator.SendNotification(n)
+	id, err := notifier.SendNotification(n)
 	if err != nil {
 		panic(err)
 	}
 	log.Printf("sent notification id: %v", id)
 
-	not := <-notificator.NotificationClosed()
-	log.Printf("NotificationClosed: %v Reason: %v", not.Id, not.Reason)
+	actions := notifier.ActionInvoked()
+	action := <-actions
+	log.Printf("Action: %v Key: %v", action.Id, action.ActionKey)
 
-	caps, err := notificator.GetCapabilities()
+	closer := <-notifier.NotificationClosed()
+	log.Printf("NotificationClosed: %v Reason: %v", closer.Id, closer.Reason)
+
+	caps, err := notifier.GetCapabilities()
 	if err != nil {
 		log.Printf("error fetching capabilities: %v", err)
 	}
@@ -50,7 +54,7 @@ func main() {
 		fmt.Printf("Registered capability: %v\n", caps[x])
 	}
 
-	info, err := notificator.GetServerInformation()
+	info, err := notifier.GetServerInformation()
 	if err != nil {
 		log.Printf("error getting server information: %v", err)
 	}
