@@ -9,19 +9,15 @@ import (
 )
 
 func main() {
-	iconName := "mail-unread"
 
 	conn, err := dbus.SessionBus()
 	if err != nil {
 		panic(err)
 	}
 
-	notifier, err := notify.New(conn)
-	if err != nil {
-		log.Fatalln(err.Error())
-	}
-	defer notifier.Close()
-
+	// Basic usage
+	// Create a Notification to send
+	iconName := "mail-unread"
 	n := notify.Notification{
 		AppName:       "Test GO App",
 		ReplacesID:    uint32(0),
@@ -33,20 +29,16 @@ func main() {
 		ExpireTimeout: int32(5000),
 	}
 
-	id, err := notifier.SendNotification(n)
+	// Ship it!
+	createdID, err := notify.SendNotification(conn, n)
 	if err != nil {
-		panic(err)
+		log.Printf("error sending notification: %v", err.Error())
 	}
-	log.Printf("sent notification id: %v", id)
+	log.Printf("created notification with id: %v", createdID)
 
-	actions := notifier.ActionInvoked()
-	action := <-actions
-	log.Printf("Action: %v Key: %v", action.Id, action.ActionKey)
 
-	closer := <-notifier.NotificationClosed()
-	log.Printf("NotificationClosed: %v Reason: %v", closer.Id, closer.Reason)
-
-	caps, err := notifier.GetCapabilities()
+	// List server features!
+	caps, err := notify.GetCapabilities(conn)
 	if err != nil {
 		log.Printf("error fetching capabilities: %v", err)
 	}
@@ -54,7 +46,7 @@ func main() {
 		fmt.Printf("Registered capability: %v\n", caps[x])
 	}
 
-	info, err := notifier.GetServerInformation()
+	info, err := notify.GetServerInformation(conn)
 	if err != nil {
 		log.Printf("error getting server information: %v", err)
 	}
@@ -63,7 +55,30 @@ func main() {
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
 
-	// And there is a helper for just sending notifications directly if you have a connection:
-	//notify.SendNotification(conn, n)
+
+
+	// Notifyer interface with event delivery
+	notifier, err := notify.New(conn)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer notifier.Close()
+
+	id, err := notifier.SendNotification(n)
+	if err != nil {
+		log.Printf("error sending notification: %v", err)
+	}
+	log.Printf("sent notification id: %v", id)
+
+	// Listen for actions invoked!
+	actions := notifier.ActionInvoked()
+	go func() {
+		action := <-actions
+		log.Printf("ActionInvoked: %v Key: %v", action.Id, action.ActionKey)
+	}()
+
+	closer := <-notifier.NotificationClosed()
+	log.Printf("NotificationClosed: %v Reason: %v", closer.Id, closer.Reason)
+
 
 }
