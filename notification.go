@@ -84,7 +84,7 @@ func (n notifier) handleSignal(signal *dbus.Signal) {
 	case signalNotificationClosed:
 		n.closer <- &NotificationClosedSignal{
 			Id:     signal.Body[0].(uint32),
-			Reason: signal.Body[1].(uint32),
+			Reason: Reason(signal.Body[1].(uint32)),
 		}
 	case signalActionInvoked:
 		n.action <- &ActionInvokedSignal{
@@ -259,13 +259,32 @@ func GetCapabilities(conn *dbus.Conn) ([]string, error) {
 }
 
 // From the Gnome developer spec:
-const ReasonExpired = 1         // 1 - The notification expired.
-const ReasonDismissedByUser = 2 // 2 - The notification was dismissed by the user.
-const ReasonClosedByCall = 3    // 3 - The notification was closed by a call to CloseNotification.
-const ReasonUnknown = 4         // 4 - Undefined/reserved reasons.
+// 1 - The notification expired.
+// 2 - The notification was dismissed by the user.
+// 3 - The notification was closed by a call to CloseNotification.
+// 4 - Undefined/reserved reasons.
+const ReasonExpired Reason = 1
+const ReasonDismissedByUser Reason = 2
+const ReasonClosedByCall Reason = 3
+const ReasonUnknown Reason = 4
+func (r Reason) String() string {
+	switch r {
+	case ReasonExpired:
+		return "Expired"
+	case ReasonDismissedByUser:
+		return "DismissedByUser"
+	case ReasonClosedByCall:
+		return "ClosedByCall"
+	case ReasonUnknown:
+		return "Unknown"
+	default:
+		return "Other"
+	}
+}
+type Reason uint32
 type NotificationClosedSignal struct {
 	Id     uint32
-	Reason uint32
+	Reason Reason
 }
 
 func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
