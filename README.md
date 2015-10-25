@@ -32,6 +32,10 @@ Clone repo and go to examples folder:
 
 The Gnome notification spec https://developer.gnome.org/notification-spec/.
 
+
+## Contributors
+Thanks to user [emersion](https://github.com/emersion) for great ideas on receiving signals.
+
 ## License
 
 GPLv3
