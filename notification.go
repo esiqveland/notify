@@ -258,6 +258,11 @@ func GetCapabilities(conn *dbus.Conn) ([]string, error) {
 	return ret, nil
 }
 
+// From the Gnome developer spec:
+const ReasonExpired = 1         // 1 - The notification expired.
+const ReasonDismissedByUser = 2 // 2 - The notification was dismissed by the user.
+const ReasonClosedByCall = 3    // 3 - The notification was closed by a call to CloseNotification.
+const ReasonUnknown = 4         // 4 - Undefined/reserved reasons.
 type NotificationClosedSignal struct {
 	Id     uint32
 	Reason uint32
