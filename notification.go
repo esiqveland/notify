@@ -5,39 +5,117 @@ import (
 	"log"
 
 	"github.com/godbus/dbus"
+	"sync"
 )
 
 const (
-	objectPath                 = "/org/freedesktop/Notifications" // the DBUS object path
+	dbusRemoveMatch            = "org.freedesktop.DBus.RemoveMatch"
+	dbusAddMatch               = "org.freedesktop.DBus.AddMatch"
+	dbusObjectPath             = "/org/freedesktop/Notifications" // the DBUS object path
 	dbusNotificationsInterface = "org.freedesktop.Notifications"  // DBUS Interface
-	getCapabilities            = "org.freedesktop.Notifications.GetCapabilities"
-	closeNotification          = "org.freedesktop.Notifications.CloseNotification"
-	notify                     = "org.freedesktop.Notifications.Notify"
-	getServerInformation       = "org.freedesktop.Notifications.GetServerInformation"
+	signalNotificationClosed   = "org.freedesktop.Notifications.NotificationClosed"
+	signalActionInvoked        = "org.freedesktop.Notifications.ActionInvoked"
+	callGetCapabilities        = "org.freedesktop.Notifications.GetCapabilities"
+	callCloseNotification      = "org.freedesktop.Notifications.CloseNotification"
+	callNotify                 = "org.freedesktop.Notifications.Notify"
+	callGetServerInformation   = "org.freedesktop.Notifications.GetServerInformation"
+
+	channelBufferSize = 10
 )
 
-// New creates a new Notificator using conn
-func New(conn *dbus.Conn) Notifier {
-	return &notifier{
-		conn: conn,
+// New creates a new Notifier using conn.
+// Sets up a Notifier that listens on dbus' signals regarding
+// Notifications: NotificationClosed and ActionInvoked.
+//
+// Note this also means the caller MUST consume output from these channels,
+// given in methods NotificationClosed() and ActionInvoked().
+// Users that only want to send a simple notification, but don't care about
+// interactions, see exported method: SendNotification(conn, Notification)
+//
+// Caller is also responsible to call Close() before exiting,
+// to shut down event loop and cleanup.
+func New(conn *dbus.Conn) (Notifier, error) {
+	n := &notifier{
+		conn:    conn,
+		signal:  make(chan *dbus.Signal, channelBufferSize),
+		closer:  make(chan *NotificationClosedSignal, channelBufferSize),
+		action:  make(chan *ActionInvokedSignal, channelBufferSize),
+		done:    make(chan bool),
+		running: sync.Mutex{},
+	}
+
+	// add a listener in dbus for signals to Notification interface.
+	call := n.conn.BusObject().Call(dbusAddMatch, 0,
+		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
+	if call.Err != nil {
+		return nil, call.Err
+	}
+
+	// start eventloop
+	go n.eventLoop()
+
+	// register in dbus for signal delivery
+	n.conn.Signal(n.signal)
+
+	return n, nil
+}
+
+func (n notifier) eventLoop() {
+	n.running.Lock()
+	defer n.running.Unlock()
+	received := 0
+	for {
+		select {
+		case signal := <-n.signal:
+			received += 1
+			log.Printf("got signal: %v Signal: %+v", received, signal)
+			go n.handleSignal(signal)
+		// its all over, exit and go home
+		case <-n.done:
+			log.Printf("its all over, go home")
+			return
+		}
 	}
 }
 
-// notifier implements Notificator
+// signal handler that translates and sends notifications to channels
+func (n notifier) handleSignal(signal *dbus.Signal) {
+	switch signal.Name {
+	case signalNotificationClosed:
+		n.closer <- &NotificationClosedSignal{
+			Id:     signal.Body[0].(uint32),
+			Reason: signal.Body[1].(uint32),
+		}
+	case signalActionInvoked:
+		n.action <- &ActionInvokedSignal{
+			Id:        signal.Body[0].(uint32),
+			ActionKey: signal.Body[1].(string),
+		}
+	default:
+		log.Printf("unknown signal: %+v", signal)
+	}
+}
+
+// notifier implements Notifier interface
 type notifier struct {
-	conn *dbus.Conn
+	conn    *dbus.Conn
+	signal  chan *dbus.Signal
+	closer  chan *NotificationClosedSignal
+	action  chan *ActionInvokedSignal
+	done    chan bool
+	running sync.Mutex
 }
 
 // Notification holds all information needed for creating a notification
 type Notification struct {
 	AppName       string
-	ReplacesID    uint32
-	AppIcon       string // see icons here: http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+	ReplacesID    uint32 // (atomically) replaces notification with this ID. Optional.
+	AppIcon       string // See icons here: http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html Optional.
 	Summary       string
 	Body          string
-	Actions       []string
+	Actions       []string // tuples of (action_key, label), e.g.: []string{"cancel", "Cancel", "open", "Open"}
 	Hints         map[string]dbus.Variant
-	ExpireTimeout int32 // millisecond to show notification
+	ExpireTimeout int32 // milliseconds to show notification
 }
 
 // SendNotification sends a notification to the notification server.
@@ -69,11 +147,11 @@ func (n *notifier) SendNotification(note Notification) (uint32, error) {
 	return SendNotification(n.conn, note)
 }
 
-// SendNotification is same as Notifier.SendNotification
-// Provided for convenience.
+// SendNotification is provided for convenience.
+// Use if you only want to deliver a notification and dont care about events.
 func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
-	obj := conn.Object(dbusNotificationsInterface, objectPath)
-	call := obj.Call(notify, 0,
+	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
+	call := obj.Call(callNotify, 0,
 		note.AppName,
 		note.ReplacesID,
 		note.AppIcon,
@@ -94,27 +172,6 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 	return ret, nil
 }
 
-// GetCapabilities gets the capabilities of the notification server.
-// This call takes no parameters.
-// It returns an array of strings. Each string describes an optional capability implemented by the server.
-//
-// See also: https://developer.gnome.org/notification-spec/
-func (n *notifier) GetCapabilities() ([]string, error) {
-	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
-	call := obj.Call(getCapabilities, 0)
-	if call.Err != nil {
-		log.Printf("error calling GetCapabilities: %v", call.Err)
-		return []string{}, call.Err
-	}
-	var ret []string
-	err := call.Store(&ret)
-	if err != nil {
-		log.Printf("error getting capabilities ret value: %v", err)
-		return ret, err
-	}
-	return ret, nil
-}
-
 // CloseNotification causes a notification to be forcefully closed and removed from the user's view.
 // It can be used, for example, in the event that what the notification pertains to is no longer relevant,
 // or to cancel a notification with no expiration time.
@@ -122,8 +179,8 @@ func (n *notifier) GetCapabilities() ([]string, error) {
 // The NotificationClosed (dbus) signal is emitted by this method.
 // If the notification no longer exists, an empty D-BUS Error message is sent back.
 func (n *notifier) CloseNotification(id int) (bool, error) {
-	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
-	call := obj.Call(closeNotification, 0, uint32(id))
+	obj := n.conn.Object(dbusNotificationsInterface, dbusObjectPath)
+	call := obj.Call(callCloseNotification, 0, uint32(id))
 	if call.Err != nil {
 		return false, call.Err
 	}
@@ -151,24 +208,93 @@ type ServerInformation struct {
 //		version		 STRING	  The server's version number.
 //		spec_version STRING	  The specification version the server is compliant with.
 //
-func (n *notifier) GetServerInformation() (ServerInformation, error) {
-	obj := n.conn.Object(dbusNotificationsInterface, objectPath)
+func GetServerInformation(conn *dbus.Conn) (ServerInformation, error) {
+	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
 	if obj == nil {
 		return ServerInformation{}, errors.New("error creating dbus call object")
 	}
-	call := obj.Call(getServerInformation, 0)
+	call := obj.Call(callGetServerInformation, 0)
 	if call.Err != nil {
-		log.Printf("Error calling %v: %v", getServerInformation, call.Err)
+		log.Printf("Error calling %v: %v", callGetServerInformation, call.Err)
 		return ServerInformation{}, call.Err
 	}
 
 	ret := ServerInformation{}
 	err := call.Store(&ret.Name, &ret.Vendor, &ret.Version, &ret.SpecVersion)
 	if err != nil {
-		log.Printf("error reading %v return values: %v", getServerInformation, err)
+		log.Printf("error reading %v return values: %v", callGetServerInformation, err)
 		return ret, err
 	}
 	return ret, nil
+}
+
+func (n *notifier) GetServerInformation() (ServerInformation, error) {
+	return GetServerInformation(n.conn)
+}
+
+// GetCapabilities gets the capabilities of the notification server.
+// This call takes no parameters.
+// It returns an array of strings. Each string describes an optional capability implemented by the server.
+//
+// See also: https://developer.gnome.org/notification-spec/
+func (n *notifier) GetCapabilities() ([]string, error) {
+	return GetCapabilities(n.conn)
+}
+
+// GetCapabilities provide an exported method for this operation
+func GetCapabilities(conn *dbus.Conn) ([]string, error) {
+	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
+	call := obj.Call(callGetCapabilities, 0)
+	if call.Err != nil {
+		log.Printf("error calling GetCapabilities: %v", call.Err)
+		return []string{}, call.Err
+	}
+	var ret []string
+	err := call.Store(&ret)
+	if err != nil {
+		log.Printf("error getting capabilities ret value: %v", err)
+		return ret, err
+	}
+	return ret, nil
+}
+
+// From the Gnome developer spec:
+const ReasonExpired = 1         // 1 - The notification expired.
+const ReasonDismissedByUser = 2 // 2 - The notification was dismissed by the user.
+const ReasonClosedByCall = 3    // 3 - The notification was closed by a call to CloseNotification.
+const ReasonUnknown = 4         // 4 - Undefined/reserved reasons.
+type NotificationClosedSignal struct {
+	Id     uint32
+	Reason uint32
+}
+
+func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
+	return n.closer
+}
+
+type ActionInvokedSignal struct {
+	Id        uint32
+	ActionKey string
+}
+
+func (n *notifier) ActionInvoked() <-chan *ActionInvokedSignal {
+	return n.action
+}
+
+// Close cleans up and shuts down signal delivery loop
+func (n *notifier) Close() error {
+	log.Printf("closing!")
+	n.done <- true
+	n.conn.BusObject().Call(dbusRemoveMatch, 0,
+		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
+
+	// remove signal reception
+	defer n.conn.Signal(n.signal)
+	close(n.closer)
+	close(n.action)
+	close(n.done)
+	err := n.conn.Close()
+	return err
 }
 
 // Notifier is an interface for implementing the operations supported by the
@@ -178,4 +304,7 @@ type Notifier interface {
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
 	CloseNotification(id int) (bool, error)
+	NotificationClosed() <-chan *NotificationClosedSignal
+	ActionInvoked() <-chan *ActionInvokedSignal
+	Close() error
 }
