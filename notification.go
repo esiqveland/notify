@@ -207,15 +207,25 @@ func (n notifier) eventLoop() {
 func (n notifier) handleSignal(signal *dbus.Signal) {
 	switch signal.Name {
 	case signalNotificationClosed:
-		n.closer <- &NotificationClosedSignal{
+		closed := &NotificationClosedSignal{
 			Id:     signal.Body[0].(uint32),
 			Reason: Reason(signal.Body[1].(uint32)),
 		}
+		select {
+		case n.closer <- closed:
+		default: log.Printf("error: notification not delivered, channel full. Forgot to drain it?")
+		}
+
 	case signalActionInvoked:
-		n.action <- &ActionInvokedSignal{
+		action := &ActionInvokedSignal{
 			Id:        signal.Body[0].(uint32),
 			ActionKey: signal.Body[1].(string),
 		}
+		select {
+		case n.action <- action:
+		default: log.Printf("error: notification not delivered, channel full. Forgot to drain it?")
+		}
+
 	default:
 		log.Printf("unknown signal: %+v", signal)
 	}
@@ -330,4 +340,3 @@ func (n *notifier) Close() error {
 	err := n.conn.Close()
 	return err
 }
-
