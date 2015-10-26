@@ -302,6 +302,10 @@ func (r Reason) String() string {
 	}
 }
 
+// NotificationClosed returns a receive only channel that sends
+// NotificationClosedSignal for signals.
+//
+// Must be consumed because event delivery will stall.
 func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
 	return n.closer
 }
@@ -311,6 +315,10 @@ type ActionInvokedSignal struct {
 	ActionKey string
 }
 
+// ActionInvoked returns a receive only channel that sends
+// NotificationClosedSignal for signals.
+//
+// Must be consumed.
 func (n *notifier) ActionInvoked() <-chan *ActionInvokedSignal {
 	return n.action
 }
