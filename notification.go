@@ -4,8 +4,9 @@ import (
 	"errors"
 	"log"
 
-	"github.com/godbus/dbus"
 	"sync"
+
+	"github.com/godbus/dbus"
 )
 
 const (
@@ -59,7 +60,6 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 	}
 	return ret, nil
 }
-
 
 // ServerInformation is a holder for information returned by
 // GetServerInformation call.
@@ -154,7 +154,7 @@ type notifier struct {
 	closer  chan *NotificationClosedSignal
 	action  chan *ActionInvokedSignal
 	done    chan bool
-	running sync.Mutex
+	running *sync.Mutex
 }
 
 // New creates a new Notifier using conn.
@@ -166,7 +166,7 @@ func New(conn *dbus.Conn) (Notifier, error) {
 		closer:  make(chan *NotificationClosedSignal, channelBufferSize),
 		action:  make(chan *ActionInvokedSignal, channelBufferSize),
 		done:    make(chan bool),
-		running: sync.Mutex{},
+		running: &sync.Mutex{},
 	}
 
 	// add a listener in dbus for signals to Notification interface.
@@ -192,10 +192,8 @@ func (n notifier) eventLoop() {
 	for {
 		select {
 		case signal := <-n.signal:
-			received += 1
-			log.Printf("got signal: %v Signal: %+v", received, signal)
+			received++
 			go n.handleSignal(signal)
-		// its all over, exit and go home
 		case <-n.done:
 			log.Printf("its all over, go home")
 			return
@@ -208,12 +206,12 @@ func (n notifier) handleSignal(signal *dbus.Signal) {
 	switch signal.Name {
 	case signalNotificationClosed:
 		n.closer <- &NotificationClosedSignal{
-			Id:     signal.Body[0].(uint32),
+			ID:     signal.Body[0].(uint32),
 			Reason: Reason(signal.Body[1].(uint32)),
 		}
 	case signalActionInvoked:
 		n.action <- &ActionInvokedSignal{
-			Id:        signal.Body[0].(uint32),
+			ID:        signal.Body[0].(uint32),
 			ActionKey: signal.Body[1].(string),
 		}
 	default:
@@ -227,7 +225,6 @@ func (n *notifier) GetCapabilities() ([]string, error) {
 func (n *notifier) GetServerInformation() (ServerInformation, error) {
 	return GetServerInformation(n.conn)
 }
-
 
 // SendNotification sends a notification to the notification server.
 // Implements dbus call:
@@ -274,19 +271,27 @@ func (n *notifier) CloseNotification(id int) (bool, error) {
 }
 
 type NotificationClosedSignal struct {
-	Id     uint32
+	ID     uint32
 	Reason Reason
 }
-// From the Gnome developer spec:
-// 1 - The notification expired.
-// 2 - The notification was dismissed by the user.
-// 3 - The notification was closed by a call to CloseNotification.
-// 4 - Undefined/reserved reasons.
+
+// Reason for the closed notification
 type Reason uint32
-const ReasonExpired Reason = 1
-const ReasonDismissedByUser Reason = 2
-const ReasonClosedByCall Reason = 3
-const ReasonUnknown Reason = 4
+
+const (
+	// ReasonExpired when a notification expired
+	ReasonExpired Reason = 1
+
+	// ReasonDismissedByUser when a notification has been dismissed by a user
+	ReasonDismissedByUser Reason = 2
+
+	// ReasonClosedByCall when a notification has been closed by a call to CloseNotification
+	ReasonClosedByCall Reason = 3
+
+	// ReasonUnknown when as notification has been closed for an unknown reason
+	ReasonUnknown Reason = 4
+)
+
 func (r Reason) String() string {
 	switch r {
 	case ReasonExpired:
@@ -311,7 +316,7 @@ func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
 }
 
 type ActionInvokedSignal struct {
-	Id        uint32
+	ID        uint32
 	ActionKey string
 }
 
@@ -338,4 +343,3 @@ func (n *notifier) Close() error {
 	err := n.conn.Close()
 	return err
 }
-
