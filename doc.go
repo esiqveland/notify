@@ -1,5 +1,5 @@
 /*
-The notify package is a wrapper around godbus for dbus notification interface
+Package notify is a wrapper around godbus for dbus notification interface
 See: https://developer.gnome.org/notification-spec/ and
 https://github.com/godbus/dbus
 
