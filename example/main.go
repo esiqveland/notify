@@ -74,11 +74,11 @@ func main() {
 	actions := notifier.ActionInvoked()
 	go func() {
 		action := <-actions
-		log.Printf("ActionInvoked: %v Key: %v", action.Id, action.ActionKey)
+		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
 	}()
 
 	closer := <-notifier.NotificationClosed()
-	log.Printf("NotificationClosed: %v Reason: %v", closer.Id, closer.Reason)
+	log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
 
 
 }
