@@ -4,8 +4,6 @@ import (
 	"errors"
 	"log"
 
-	"sync"
-
 	"github.com/godbus/dbus"
 )
 
@@ -159,7 +157,6 @@ type notifier struct {
 	closer  chan *NotificationClosedSignal
 	action  chan *ActionInvokedSignal
 	done    chan bool
-	running *sync.Mutex
 }
 
 // New creates a new Notifier using conn.
@@ -171,7 +168,6 @@ func New(conn *dbus.Conn) (Notifier, error) {
 		closer:  make(chan *NotificationClosedSignal, channelBufferSize),
 		action:  make(chan *ActionInvokedSignal, channelBufferSize),
 		done:    make(chan bool),
-		running: &sync.Mutex{},
 	}
 
 	// add a listener in dbus for signals to Notification interface.
@@ -191,8 +187,6 @@ func New(conn *dbus.Conn) (Notifier, error) {
 }
 
 func (n notifier) eventLoop() {
-	n.running.Lock()
-	defer n.running.Unlock()
 	received := 0
 	for {
 		select {
