@@ -3,11 +3,11 @@
 [![GoDoc](https://godoc.org/github.com/esiqveland/notify?status.svg)](https://godoc.org/github.com/esiqveland/notify)
 [![CircleCI](https://circleci.com/gh/esiqveland/notify.svg?style=svg)](https://circleci.com/gh/esiqveland/notify)
 
-Notify is a go library for interacting with the dbus notification service defined here:
+Notify is a go library for interacting with the dbus notification service defined by freedesktop.org:
 https://developer.gnome.org/notification-spec/
 
 It can deliver notifications to desktop using dbus communication, ala how libnotify does it.
-It has so far only been testing with gnome and gnome-shell 3.16/3.18 in Arch Linux. 
+It has so far only been tested on gnome and gnome-shell 3.16/3.18/3.22 in Arch Linux. 
 
 Please note ```notify``` is still in a very early change and no APIs are locked until a 1.0 is released.
 
