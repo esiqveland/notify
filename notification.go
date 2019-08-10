@@ -329,10 +329,14 @@ func (n *notifier) ActionInvoked() <-chan *ActionInvokedSignal {
 
 // Close cleans up and shuts down signal delivery loop
 func (n *notifier) Close() error {
-	log.Printf("closing!")
 	n.done <- true
-	n.conn.BusObject().Call(dbusRemoveMatch, 0,
-		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
+
+	n.conn.
+		BusObject().
+		Call(
+			dbusRemoveMatch,
+			0,
+			"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
 
 	// remove signal reception
 	defer n.conn.Signal(n.signal)
