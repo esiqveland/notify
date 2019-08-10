@@ -39,6 +39,11 @@ type Notification struct {
 // SendNotification is provided for convenience.
 // Use if you only want to deliver a notification and dont care about events.
 func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
+	actions := len(note.Actions)
+	if (actions % 2) != 0 {
+		return 0, errors.New("Actions must be pairs of (key, label).")
+	}
+
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
 	call := obj.Call(callNotify, 0,
 		note.AppName,
