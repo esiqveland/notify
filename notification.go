@@ -24,14 +24,20 @@ const (
 
 // Notification holds all information needed for creating a notification
 type Notification struct {
-	AppName       string
-	ReplacesID    uint32 // (atomically) replaces notification with this ID. Optional.
-	AppIcon       string // See icons here: http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html Optional.
-	Summary       string
-	Body          string
-	Actions       []string // tuples of (action_key, label), e.g.: []string{"cancel", "Cancel", "open", "Open"}
-	Hints         map[string]dbus.Variant
-	ExpireTimeout int32 // milliseconds to show notification
+	AppName string
+	// Setting ReplacesID atomically replaces the notification with this ID.
+	// Optional.
+	ReplacesID uint32
+	// See predefined icons here: http://standards.freedesktop.org/icon-naming-spec/icon-naming-spec-latest.html
+	// Optional.
+	AppIcon string
+	Summary string
+	Body    string
+	// Actions are tuples of (action_key, label), e.g.: []string{"cancel", "Cancel", "open", "Open"}
+	Actions []string
+	Hints   map[string]dbus.Variant
+	// ExpireTimeout: milliseconds to show notification
+	ExpireTimeout int32
 }
 
 // SendNotification is provided for convenience.
@@ -39,7 +45,7 @@ type Notification struct {
 func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 	actions := len(note.Actions)
 	if (actions % 2) != 0 {
-		return 0, errors.New("Actions must be pairs of (key, label).")
+		return 0, errors.New("actions must be pairs of (key, label)")
 	}
 
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
@@ -152,22 +158,22 @@ type Notifier interface {
 
 // notifier implements Notifier interface
 type notifier struct {
-	conn    *dbus.Conn
-	signal  chan *dbus.Signal
-	closer  chan *NotificationClosedSignal
-	action  chan *ActionInvokedSignal
-	done    chan bool
+	conn   *dbus.Conn
+	signal chan *dbus.Signal
+	closer chan *NotificationClosedSignal
+	action chan *ActionInvokedSignal
+	done   chan bool
 }
 
 // New creates a new Notifier using conn.
 // See also: Notifier
 func New(conn *dbus.Conn) (Notifier, error) {
 	n := &notifier{
-		conn:    conn,
-		signal:  make(chan *dbus.Signal, channelBufferSize),
-		closer:  make(chan *NotificationClosedSignal, channelBufferSize),
-		action:  make(chan *ActionInvokedSignal, channelBufferSize),
-		done:    make(chan bool),
+		conn:   conn,
+		signal: make(chan *dbus.Signal, channelBufferSize),
+		closer: make(chan *NotificationClosedSignal, channelBufferSize),
+		action: make(chan *ActionInvokedSignal, channelBufferSize),
+		done:   make(chan bool),
 	}
 
 	// add a listener in dbus for signals to Notification interface.
@@ -192,9 +198,10 @@ func (n notifier) eventLoop() {
 		select {
 		case signal := <-n.signal:
 			received++
+			// We do this in a new routine to avoid blocking event delivery upstream in dbus.Conn
 			go n.handleSignal(signal)
 		case <-n.done:
-			log.Printf("its all over, go home")
+			log.Printf("Got Close() signal, shutting down...")
 			return
 		}
 	}
@@ -228,14 +235,16 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 // SendNotification sends a notification to the notification server.
 // Implements dbus call:
 //
-//     UINT32 org.freedesktop.Notifications.Notify ( STRING app_name,
-//	    										 UINT32 replaces_id,
-//	    										 STRING app_icon,
-//	    										 STRING summary,
-//	    										 STRING body,
-//	    										 ARRAY  actions,
-//	    										 DICT   hints,
-//	    										 INT32  expire_timeout);
+//     UINT32 org.freedesktop.Notifications.Notify (
+//	       STRING app_name,
+//	       UINT32 replaces_id,
+//	       STRING app_icon,
+//	       STRING summary,
+//	       STRING body,
+//	       ARRAY  actions,
+//	       DICT   hints,
+//	       INT32  expire_timeout
+//     );
 //
 //		Name	    	Type	Description
 //		app_name		STRING	The optional name of the application sending the notification. Can be blank.
@@ -269,6 +278,7 @@ func (n *notifier) CloseNotification(id int) (bool, error) {
 	return true, nil
 }
 
+// NotificationClosedSignal holds data for *Closed callbacks from Notifications Interface.
 type NotificationClosedSignal struct {
 	ID     uint32
 	Reason Reason
@@ -309,11 +319,12 @@ func (r Reason) String() string {
 // NotificationClosed returns a receive only channel that sends
 // NotificationClosedSignal for signals.
 //
-// Must be consumed because event delivery will stall.
+// The chan must be drained or event delivery will stall.
 func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
 	return n.closer
 }
 
+// ActionInvokedSignal holds callback data from any Actions passed to Notification
 type ActionInvokedSignal struct {
 	ID        uint32
 	ActionKey string
@@ -343,6 +354,6 @@ func (n *notifier) Close() error {
 	close(n.closer)
 	close(n.action)
 	close(n.done)
-	
+
 	return nil
 }
