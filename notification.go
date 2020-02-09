@@ -381,8 +381,11 @@ func (n *notifier) Close() error {
 			"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
 
 	// remove signal reception
-	defer n.conn.Signal(n.signal)
+	n.conn.RemoveSignal(n.signal)
 	close(n.done)
+
+	// wait for eventloop to shut down...
+	n.wg.Wait()
 
 	return nil
 }
