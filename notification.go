@@ -197,16 +197,25 @@ func SetOnClosed(h NotificationClosedHandler) Option {
 	}
 }
 
+type loggerWrapper struct {
+	prefix string
+}
+
+func (l *loggerWrapper) Printf(format string, v ...interface{}) {
+	log.Printf(l.prefix+format, v...)
+}
+
 // New creates a new Notifier using conn.
 // See also: Notifier
 func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	n := &notifier{
-		conn:   conn,
-		signal: make(chan *dbus.Signal, channelBufferSize),
-		done:   make(chan bool),
-		wg:     &sync.WaitGroup{},
+		conn:     conn,
+		signal:   make(chan *dbus.Signal, channelBufferSize),
+		done:     make(chan bool),
+		wg:       &sync.WaitGroup{},
 		onClosed: func(s *NotificationClosedSignal) {},
 		onAction: func(s *ActionInvokedSignal) {},
+		log:      &loggerWrapper{"notify: "},
 	}
 
 	for _, val := range opts {
