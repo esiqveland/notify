@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/esiqveland/notify"
@@ -67,7 +68,7 @@ func main() {
 	}
 
 	// Notifyer interface with event delivery
-	notifier, err := notify.New(conn, notify.SetOnAction(onAction), notify.SetOnClosed(onClosed))
+	notifier, err := notify.New(conn, notify.SetOnAction(onAction), notify.SetOnClosed(onClosed), notify.SetLogger(log.New(os.Stdout, "notify: ", log.Flags())))
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
