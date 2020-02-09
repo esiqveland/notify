@@ -2,6 +2,7 @@ package notify
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/godbus/dbus/v5"
@@ -59,13 +60,12 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 		note.Hints,
 		note.ExpireTimeout)
 	if call.Err != nil {
-		return 0, call.Err
+		return 0, fmt.Errorf("error sending notification: %w", call.Err)
 	}
 	var ret uint32
 	err := call.Store(&ret)
 	if err != nil {
-		log.Printf("error getting uint32 ret value: %v", err)
-		return ret, err
+		return ret, fmt.Errorf("error getting uint32 ret value: %w", err)
 	}
 	return ret, nil
 }
@@ -98,15 +98,13 @@ func GetServerInformation(conn *dbus.Conn) (ServerInformation, error) {
 	}
 	call := obj.Call(callGetServerInformation, 0)
 	if call.Err != nil {
-		log.Printf("Error calling %v: %v", callGetServerInformation, call.Err)
-		return ServerInformation{}, call.Err
+		return ServerInformation{}, fmt.Errorf("error calling %v: %v", callGetServerInformation, call.Err)
 	}
 
 	ret := ServerInformation{}
 	err := call.Store(&ret.Name, &ret.Vendor, &ret.Version, &ret.SpecVersion)
 	if err != nil {
-		log.Printf("error reading %v return values: %v", callGetServerInformation, err)
-		return ret, err
+		return ret, fmt.Errorf("error reading %v return values: %v", callGetServerInformation, err)
 	}
 	return ret, nil
 }
@@ -163,17 +161,36 @@ type notifier struct {
 	closer chan *NotificationClosedSignal
 	action chan *ActionInvokedSignal
 	done   chan bool
+	log    logger
+}
+
+type logger interface {
+	Printf(format string, v ...interface{})
+}
+
+// Option overrides certain parts of a Notifier
+type Option func(*notifier)
+
+// SetLogger sets a new logger func
+func SetLogger(logz logger) Option {
+	return func(n *notifier) {
+		n.log = logz
+	}
 }
 
 // New creates a new Notifier using conn.
 // See also: Notifier
-func New(conn *dbus.Conn) (Notifier, error) {
+func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	n := &notifier{
 		conn:   conn,
 		signal: make(chan *dbus.Signal, channelBufferSize),
 		closer: make(chan *NotificationClosedSignal, channelBufferSize),
 		action: make(chan *ActionInvokedSignal, channelBufferSize),
 		done:   make(chan bool),
+	}
+
+	for _, val := range opts {
+		val(n)
 	}
 
 	// add a listener in dbus for signals to Notification interface.
@@ -201,7 +218,7 @@ func (n notifier) eventLoop() {
 			// We do this in a new routine to avoid blocking event delivery upstream in dbus.Conn
 			go n.handleSignal(signal)
 		case <-n.done:
-			log.Printf("Got Close() signal, shutting down...")
+			n.log.Printf("Got Close() signal, shutting down...")
 			return
 		}
 	}
@@ -221,7 +238,7 @@ func (n notifier) handleSignal(signal *dbus.Signal) {
 			ActionKey: signal.Body[1].(string),
 		}
 	default:
-		log.Printf("unknown signal: %+v", signal)
+		n.log.Printf("unknown signal: %+v", signal)
 	}
 }
 
