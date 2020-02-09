@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -149,19 +150,23 @@ type Notifier interface {
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
 	CloseNotification(id int) (bool, error)
-	NotificationClosed() <-chan *NotificationClosedSignal
-	ActionInvoked() <-chan *ActionInvokedSignal
+	//NotificationClosed() <-chan *NotificationClosedSignal
+	//ActionInvoked() <-chan *ActionInvokedSignal
 	Close() error
 }
 
+type NotificationClosedHandler func(*NotificationClosedSignal)
+type ActionInvokedHandler func(*ActionInvokedSignal)
+
 // notifier implements Notifier interface
 type notifier struct {
-	conn   *dbus.Conn
-	signal chan *dbus.Signal
-	closer chan *NotificationClosedSignal
-	action chan *ActionInvokedSignal
-	done   chan bool
-	log    logger
+	conn     *dbus.Conn
+	signal   chan *dbus.Signal
+	done     chan bool
+	onClosed NotificationClosedHandler
+	onAction ActionInvokedHandler
+	wg       *sync.WaitGroup
+	log      logger
 }
 
 type logger interface {
@@ -178,15 +183,30 @@ func SetLogger(logz logger) Option {
 	}
 }
 
+// SetOnAction sets ActionInvokedHandler handler
+func SetOnAction(h ActionInvokedHandler) Option {
+	return func(n *notifier) {
+		n.onAction = h
+	}
+}
+
+// SetOnClosed sets NotificationClosed handler
+func SetOnClosed(h NotificationClosedHandler) Option {
+	return func(n *notifier) {
+		n.onClosed = h
+	}
+}
+
 // New creates a new Notifier using conn.
 // See also: Notifier
 func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	n := &notifier{
 		conn:   conn,
 		signal: make(chan *dbus.Signal, channelBufferSize),
-		closer: make(chan *NotificationClosedSignal, channelBufferSize),
-		action: make(chan *ActionInvokedSignal, channelBufferSize),
 		done:   make(chan bool),
+		wg:     &sync.WaitGroup{},
+		onClosed: func(s *NotificationClosedSignal) {},
+		onAction: func(s *ActionInvokedSignal) {},
 	}
 
 	for _, val := range opts {
@@ -210,13 +230,12 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 }
 
 func (n notifier) eventLoop() {
-	received := 0
+	n.wg.Add(1)
+	defer n.wg.Done()
 	for {
 		select {
 		case signal := <-n.signal:
-			received++
-			// We do this in a new routine to avoid blocking event delivery upstream in dbus.Conn
-			go n.handleSignal(signal)
+			n.handleSignal(signal)
 		case <-n.done:
 			n.log.Printf("Got Close() signal, shutting down...")
 			return
@@ -228,15 +247,17 @@ func (n notifier) eventLoop() {
 func (n notifier) handleSignal(signal *dbus.Signal) {
 	switch signal.Name {
 	case signalNotificationClosed:
-		n.closer <- &NotificationClosedSignal{
+		nc := &NotificationClosedSignal{
 			ID:     signal.Body[0].(uint32),
 			Reason: Reason(signal.Body[1].(uint32)),
 		}
+		n.onClosed(nc)
 	case signalActionInvoked:
-		n.action <- &ActionInvokedSignal{
+		is := &ActionInvokedSignal{
 			ID:        signal.Body[0].(uint32),
 			ActionKey: signal.Body[1].(string),
 		}
+		n.onAction(is)
 	default:
 		n.log.Printf("unknown signal: %+v", signal)
 	}
@@ -333,26 +354,10 @@ func (r Reason) String() string {
 	}
 }
 
-// NotificationClosed returns a receive only channel that sends
-// NotificationClosedSignal for signals.
-//
-// The chan must be drained or event delivery will stall.
-func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
-	return n.closer
-}
-
 // ActionInvokedSignal holds callback data from any Actions passed to Notification
 type ActionInvokedSignal struct {
 	ID        uint32
 	ActionKey string
-}
-
-// ActionInvoked returns a receive only channel that sends
-// NotificationClosedSignal for signals.
-//
-// Must be consumed.
-func (n *notifier) ActionInvoked() <-chan *ActionInvokedSignal {
-	return n.action
 }
 
 // Close cleans up and shuts down signal delivery loop
@@ -368,8 +373,6 @@ func (n *notifier) Close() error {
 
 	// remove signal reception
 	defer n.conn.Signal(n.signal)
-	close(n.closer)
-	close(n.action)
 	close(n.done)
 
 	return nil

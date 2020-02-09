@@ -54,8 +54,17 @@ func main() {
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
 
+	// Listen for actions invoked!
+	onAction := func(action *notify.ActionInvokedSignal) {
+		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
+	}
+
+	onClosed := func(closer *notify.NotificationClosedSignal) {
+		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
+	}
+
 	// Notifyer interface with event delivery
-	notifier, err := notify.New(conn)
+	notifier, err := notify.New(conn, notify.SetOnAction(onAction), notify.SetOnClosed(onClosed))
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -66,15 +75,5 @@ func main() {
 		log.Printf("error sending notification: %v", err)
 	}
 	log.Printf("sent notification id: %v", id)
-
-	// Listen for actions invoked!
-	actions := notifier.ActionInvoked()
-	go func() {
-		action := <-actions
-		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
-	}()
-
-	closer := <-notifier.NotificationClosed()
-	log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
 
 }
