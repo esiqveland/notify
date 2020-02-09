@@ -343,6 +343,6 @@ func (n *notifier) Close() error {
 	close(n.closer)
 	close(n.action)
 	close(n.done)
-	err := n.conn.Close()
-	return err
+	
+	return nil
 }
