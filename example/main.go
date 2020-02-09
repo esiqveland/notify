@@ -68,7 +68,15 @@ func main() {
 	}
 
 	// Notifyer interface with event delivery
-	notifier, err := notify.New(conn, notify.SetOnAction(onAction), notify.SetOnClosed(onClosed), notify.SetLogger(log.New(os.Stdout, "notify: ", log.Flags())))
+	notifier, err := notify.New(
+		conn,
+		// action event handler
+		notify.SetOnAction(onAction),
+		// closed event handler
+		notify.SetOnClosed(onClosed),
+		// override with custom logger
+		notify.SetLogger(log.New(os.Stdout, "notify: ", log.Flags())),
+	)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
