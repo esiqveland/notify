@@ -88,6 +88,8 @@ func main() {
 	}
 	log.Printf("sent notification id: %v", id)
 
+	//outClosed := notifier.NotificationClosed()
+
 	wg.Add(2)
 	wg.Wait()
 }
