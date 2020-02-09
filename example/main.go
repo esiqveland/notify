@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus/v5"
 )
 
 func main() {
+	wg := &sync.WaitGroup{}
 
 	conn, err := dbus.SessionBus()
 	if err != nil {
@@ -57,6 +59,7 @@ func main() {
 	// Listen for actions invoked!
 	onAction := func(action *notify.ActionInvokedSignal) {
 		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
+		wg.Done()
 	}
 
 	onClosed := func(closer *notify.NotificationClosedSignal) {
@@ -76,4 +79,6 @@ func main() {
 	}
 	log.Printf("sent notification id: %v", id)
 
+	wg.Add(2)
+	wg.Wait()
 }
