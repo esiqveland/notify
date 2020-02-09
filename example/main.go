@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/esiqveland/notify"
-	"github.com/godbus/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 func main() {
@@ -36,7 +36,6 @@ func main() {
 	}
 	log.Printf("created notification with id: %v", createdID)
 
-
 	// List server features!
 	caps, err := notify.GetCapabilities(conn)
 	if err != nil {
@@ -54,8 +53,6 @@ func main() {
 	fmt.Printf("Vendor:  %v\n", info.Vendor)
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
-
-
 
 	// Notifyer interface with event delivery
 	notifier, err := notify.New(conn)
@@ -79,6 +76,5 @@ func main() {
 
 	closer := <-notifier.NotificationClosed()
 	log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
-
 
 }
