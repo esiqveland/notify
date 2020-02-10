@@ -71,11 +71,11 @@ func main() {
 	notifier, err := notify.New(
 		conn,
 		// action event handler
-		notify.SetOnAction(onAction),
+		notify.WithOnAction(onAction),
 		// closed event handler
-		notify.SetOnClosed(onClosed),
+		notify.WithOnClosed(onClosed),
 		// override with custom logger
-		notify.SetLogger(log.New(os.Stdout, "notify: ", log.Flags())),
+		notify.WithLogger(log.New(os.Stdout, "notify: ", log.Flags())),
 	)
 	if err != nil {
 		log.Fatalln(err.Error())

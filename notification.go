@@ -155,8 +155,19 @@ type Notifier interface {
 	Close() error
 }
 
+// NotificationClosedHandler is called when we receive a NotificationClosed signal
 type NotificationClosedHandler func(*NotificationClosedSignal)
+
+// ActionInvokedHandler is called when we receive a signal that one of the actions passed was invoked.
 type ActionInvokedHandler func(*ActionInvokedSignal)
+
+// ActionInvokedSignal holds data from any signal received regarding Actions invoked
+type ActionInvokedSignal struct {
+	// ID of the Notification the action was invoked for
+	ID uint32
+	// Key from the tuple (action_key, label)
+	ActionKey string
+}
 
 // notifier implements Notifier interface
 type notifier struct {
@@ -176,22 +187,22 @@ type logger interface {
 // Option overrides certain parts of a Notifier
 type Option func(*notifier)
 
-// SetLogger sets a new logger func
-func SetLogger(logz logger) Option {
+// WithLogger sets a new logger func
+func WithLogger(logz logger) Option {
 	return func(n *notifier) {
 		n.log = logz
 	}
 }
 
-// SetOnAction sets ActionInvokedHandler handler
-func SetOnAction(h ActionInvokedHandler) Option {
+// WithOnAction sets ActionInvokedHandler handler
+func WithOnAction(h ActionInvokedHandler) Option {
 	return func(n *notifier) {
 		n.onAction = h
 	}
 }
 
-// SetOnClosed sets NotificationClosed handler
-func SetOnClosed(h NotificationClosedHandler) Option {
+// WithOnClosed sets NotificationClosed handler
+func WithOnClosed(h NotificationClosedHandler) Option {
 	return func(n *notifier) {
 		n.onClosed = h
 	}
@@ -279,7 +290,8 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 	return GetServerInformation(n.conn)
 }
 
-// SendNotification sends a notification to the notification server.
+// SendNotification sends a notification to the notification server and returns the ID or an error.
+//
 // Implements dbus call:
 //
 //     UINT32 org.freedesktop.Notifications.Notify (
@@ -304,7 +316,11 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 //      expire_timeout  INT32   The timeout time in milliseconds since the display of the notification at which the notification should automatically close.
 //								If -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
 //
-// If replaces_id is 0, the return value is a UINT32 that represent the notification. It is unique, and will not be reused unless a MAXINT number of notifications have been generated. An acceptable implementation may just use an incrementing counter for the ID. The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
+// If replaces_id is 0, the return value is a UINT32 that represent the notification.
+// It is unique, and will not be reused unless a MAXINT number of notifications have been generated.
+//  An acceptable implementation may just use an incrementing counter for the ID.
+// The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
+//
 // If replaces_id is not 0, the returned value is the same value as replaces_id.
 func (n *notifier) SendNotification(note Notification) (uint32, error) {
 	return SendNotification(n.conn, note)
@@ -327,7 +343,9 @@ func (n *notifier) CloseNotification(id int) (bool, error) {
 
 // NotificationClosedSignal holds data for *Closed callbacks from Notifications Interface.
 type NotificationClosedSignal struct {
-	ID     uint32
+	// ID of the Notification the signal was invoked for
+	ID uint32
+	// A reason given if known
 	Reason Reason
 }
 
@@ -361,12 +379,6 @@ func (r Reason) String() string {
 	default:
 		return "Other"
 	}
-}
-
-// ActionInvokedSignal holds callback data from any Actions passed to Notification
-type ActionInvokedSignal struct {
-	ID        uint32
-	ActionKey string
 }
 
 // Close cleans up and shuts down signal delivery loop
