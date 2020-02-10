@@ -120,13 +120,11 @@ func GetCapabilities(conn *dbus.Conn) ([]string, error) {
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
 	call := obj.Call(callGetCapabilities, 0)
 	if call.Err != nil {
-		log.Printf("error calling GetCapabilities: %v", call.Err)
 		return []string{}, call.Err
 	}
 	var ret []string
 	err := call.Store(&ret)
 	if err != nil {
-		log.Printf("error getting capabilities ret value: %v", err)
 		return ret, err
 	}
 	return ret, nil
