@@ -385,20 +385,15 @@ func (r Reason) String() string {
 func (n *notifier) Close() error {
 	n.done <- true
 
+	// remove signal reception
+	n.conn.RemoveSignal(n.signal)
+
+	// unregister in dbus:
 	errRemoveMatch := n.conn.RemoveMatchSignal(
 		dbus.WithMatchObjectPath(dbusObjectPath),
 		dbus.WithMatchInterface(dbusNotificationsInterface),
 	)
 
-	//n.conn.
-	//	BusObject().
-	//	Call(
-	//		dbusRemoveMatch,
-	//		0,
-	//		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
-
-	// remove signal reception
-	n.conn.RemoveSignal(n.signal)
 	close(n.done)
 
 	// wait for eventloop to shut down...
