@@ -6,10 +6,9 @@
 Notify is a go library for interacting with the dbus notification service defined by freedesktop.org:
 https://developer.gnome.org/notification-spec/
 
-It can deliver notifications to desktop using dbus communication, ala how libnotify does it.
-It has so far only been tested on gnome and gnome-shell 3.16/3.18/3.22 in Arch Linux. 
+`notify` can deliver desktop notifications over dbus, ala how libnotify does it.
 
-Please note ```notify``` is still in a very early change and no APIs are locked until a 1.0 is released.
+Please note `notify` is still in motion and APIs are not locked until a 1.0 is released.
 
 More testers are very welcome =)
 
