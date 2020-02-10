@@ -160,6 +160,11 @@ type Notifier interface {
 type NotificationClosedHandler func(*NotificationClosedSignal)
 
 // ActionInvokedHandler is called when we receive a signal that one of the actions passed was invoked.
+//
+// Note that invoking an action often also produces a NotificationClosedSignal,
+// so you might receive both a Closed signal and a ActionInvoked signal.
+// I suspect this detail is implementation specific for the UI interaction,
+// and does at least happen on XFCE4.
 type ActionInvokedHandler func(*ActionInvokedSignal)
 
 // ActionInvokedSignal holds data from any signal received regarding Actions invoked
