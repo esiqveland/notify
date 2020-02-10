@@ -150,6 +150,7 @@ type Notifier interface {
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
 	CloseNotification(id int) (bool, error)
+	// Deprecated: Use NotificationClosedHandler
 	//NotificationClosed() <-chan *NotificationClosedSignal
 	//ActionInvoked() <-chan *ActionInvokedSignal
 	Close() error
@@ -208,14 +209,6 @@ func WithOnClosed(h NotificationClosedHandler) Option {
 	}
 }
 
-type loggerWrapper struct {
-	prefix string
-}
-
-func (l *loggerWrapper) Printf(format string, v ...interface{}) {
-	log.Printf(l.prefix+format, v...)
-}
-
 // New creates a new Notifier using conn.
 // See also: Notifier
 func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
@@ -234,11 +227,18 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	}
 
 	// add a listener in dbus for signals to Notification interface.
-	call := n.conn.BusObject().Call(dbusAddMatch, 0,
-		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
-	if call.Err != nil {
-		return nil, call.Err
+	err := n.conn.AddMatchSignal(
+		dbus.WithMatchObjectPath(dbusObjectPath),
+		dbus.WithMatchInterface(dbusNotificationsInterface),
+	)
+	if err != nil {
+		return nil, err
 	}
+	//call := n.conn.BusObject().Call(dbusAddMatch, 0,
+	//	"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
+	//if call.Err != nil {
+	//	return nil, call.Err
+	//}
 
 	// start eventloop
 	go n.eventLoop()
@@ -279,7 +279,7 @@ func (n notifier) handleSignal(signal *dbus.Signal) {
 		}
 		n.onAction(is)
 	default:
-		n.log.Printf("unknown signal: %+v", signal)
+		n.log.Printf("Received unknown signal: %+v", signal)
 	}
 }
 
@@ -385,12 +385,17 @@ func (r Reason) String() string {
 func (n *notifier) Close() error {
 	n.done <- true
 
-	n.conn.
-		BusObject().
-		Call(
-			dbusRemoveMatch,
-			0,
-			"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
+	errRemoveMatch := n.conn.RemoveMatchSignal(
+		dbus.WithMatchObjectPath(dbusObjectPath),
+		dbus.WithMatchInterface(dbusNotificationsInterface),
+	)
+
+	//n.conn.
+	//	BusObject().
+	//	Call(
+	//		dbusRemoveMatch,
+	//		0,
+	//		"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
 
 	// remove signal reception
 	n.conn.RemoveSignal(n.signal)
@@ -399,5 +404,22 @@ func (n *notifier) Close() error {
 	// wait for eventloop to shut down...
 	n.wg.Wait()
 
-	return nil
+	return errRemoveMatch
 }
+
+type loggerWrapper struct {
+	prefix string
+}
+
+func (l *loggerWrapper) Printf(format string, v ...interface{}) {
+	log.Printf(l.prefix+format, v...)
+}
+
+// NotificationClosed returns a receive only channel that sends
+// NotificationClosedSignal for signals.
+//
+// The chan must be drained or event delivery will stall.
+// Deprecated: Use NotificationClosedHandler
+//func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
+//	return n.closer
+//}
