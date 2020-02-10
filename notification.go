@@ -239,11 +239,6 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	if err != nil {
 		return nil, err
 	}
-	//call := n.conn.BusObject().Call(dbusAddMatch, 0,
-	//	"type='signal',path='"+dbusObjectPath+"',interface='"+dbusNotificationsInterface+"'")
-	//if call.Err != nil {
-	//	return nil, call.Err
-	//}
 
 	// start eventloop
 	go n.eventLoop()
