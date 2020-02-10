@@ -318,7 +318,7 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 //
 // If replaces_id is 0, the return value is a UINT32 that represent the notification.
 // It is unique, and will not be reused unless a MAXINT number of notifications have been generated.
-//  An acceptable implementation may just use an incrementing counter for the ID.
+// An acceptable implementation may just use an incrementing counter for the ID.
 // The returned ID is always greater than zero. Servers must make sure not to return zero as an ID.
 //
 // If replaces_id is not 0, the returned value is the same value as replaces_id.
