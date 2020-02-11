@@ -67,7 +67,7 @@ func main() {
 		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
 	}
 
-	// Notifyer interface with event delivery
+	// Notifier interface with event delivery
 	notifier, err := notify.New(
 		conn,
 		// action event handler
