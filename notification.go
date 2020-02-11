@@ -185,25 +185,25 @@ type logger interface {
 	Printf(format string, v ...interface{})
 }
 
-// Option overrides certain parts of a Notifier
-type Option func(*notifier)
+// option overrides certain parts of a Notifier
+type option func(*notifier)
 
 // WithLogger sets a new logger func
-func WithLogger(logz logger) Option {
+func WithLogger(logz logger) option {
 	return func(n *notifier) {
 		n.log = logz
 	}
 }
 
 // WithOnAction sets ActionInvokedHandler handler
-func WithOnAction(h ActionInvokedHandler) Option {
+func WithOnAction(h ActionInvokedHandler) option {
 	return func(n *notifier) {
 		n.onAction = h
 	}
 }
 
 // WithOnClosed sets NotificationClosed handler
-func WithOnClosed(h NotificationClosedHandler) Option {
+func WithOnClosed(h NotificationClosedHandler) option {
 	return func(n *notifier) {
 		n.onClosed = h
 	}
@@ -211,7 +211,7 @@ func WithOnClosed(h NotificationClosedHandler) Option {
 
 // New creates a new Notifier using conn.
 // See also: Notifier
-func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
+func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 	n := &notifier{
 		conn:     conn,
 		signal:   make(chan *dbus.Signal, channelBufferSize),
@@ -232,7 +232,7 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 		dbus.WithMatchInterface(dbusNotificationsInterface),
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error registering for signals in dbus: %w", err)
 	}
 	// register in dbus for signal delivery
 	n.conn.Signal(n.signal)
