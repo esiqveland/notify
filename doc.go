@@ -4,9 +4,7 @@ See: https://developer.gnome.org/notification-spec/ and
 https://github.com/godbus/dbus
 
 The package provides exported methods for simple usage, e.g. just show a notification.
-It also provides the interface Notifier that includes event delivery for notifications.
-Note that if you use New() to create a notifier, it is the caller responsibility to also drain the
-channels for ActionInvoked() and NotificationClosed().
+It also provides the interface Notifier that includes signal delivery for notifications on the system.
 
 Each notification created is allocated a unique ID by the server (see Notification).
 This ID is unique within the dbus session, and is an increasing number.
