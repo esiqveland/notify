@@ -148,9 +148,6 @@ type Notifier interface {
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
 	CloseNotification(id int) (bool, error)
-	// Deprecated: Use NotificationClosedHandler
-	//NotificationClosed() <-chan *NotificationClosedSignal
-	//ActionInvoked() <-chan *ActionInvokedSignal
 	Close() error
 }
 
@@ -406,12 +403,3 @@ type loggerWrapper struct {
 func (l *loggerWrapper) Printf(format string, v ...interface{}) {
 	log.Printf(l.prefix+format, v...)
 }
-
-// NotificationClosed returns a receive only channel that sends
-// NotificationClosedSignal for signals.
-//
-// The chan must be drained or event delivery will stall.
-// Deprecated: Use NotificationClosedHandler
-//func (n *notifier) NotificationClosed() <-chan *NotificationClosedSignal {
-//	return n.closer
-//}
