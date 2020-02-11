@@ -147,7 +147,7 @@ type Notifier interface {
 	SendNotification(n Notification) (uint32, error)
 	GetCapabilities() ([]string, error)
 	GetServerInformation() (ServerInformation, error)
-	CloseNotification(id int) (bool, error)
+	CloseNotification(id uint32) (bool, error)
 	Close() error
 }
 
@@ -326,9 +326,9 @@ func (n *notifier) SendNotification(note Notification) (uint32, error) {
 //
 // The NotificationClosed (dbus) signal is emitted by this method.
 // If the notification no longer exists, an empty D-BUS Error message is sent back.
-func (n *notifier) CloseNotification(id int) (bool, error) {
+func (n *notifier) CloseNotification(id uint32) (bool, error) {
 	obj := n.conn.Object(dbusNotificationsInterface, dbusObjectPath)
-	call := obj.Call(callCloseNotification, 0, uint32(id))
+	call := obj.Call(callCloseNotification, 0, id)
 	if call.Err != nil {
 		return false, call.Err
 	}
