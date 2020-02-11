@@ -21,7 +21,7 @@ const (
 	callNotify                 = "org.freedesktop.Notifications.Notify"
 	callGetServerInformation   = "org.freedesktop.Notifications.GetServerInformation"
 
-	channelBufferSize = 2
+	channelBufferSize = 10
 )
 
 // Notification holds all information needed for creating a notification
