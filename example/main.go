@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
+	"sync"
 
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus/v5"
 )
 
 func main() {
+	wg := &sync.WaitGroup{}
 
 	conn, err := dbus.SessionBus()
 	if err != nil {
@@ -54,8 +57,26 @@ func main() {
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
 
-	// Notifyer interface with event delivery
-	notifier, err := notify.New(conn)
+	// Listen for actions invoked!
+	onAction := func(action *notify.ActionInvokedSignal) {
+		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
+		wg.Done()
+	}
+
+	onClosed := func(closer *notify.NotificationClosedSignal) {
+		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
+	}
+
+	// Notifier interface with event delivery
+	notifier, err := notify.New(
+		conn,
+		// action event handler
+		notify.WithOnAction(onAction),
+		// closed event handler
+		notify.WithOnClosed(onClosed),
+		// override with custom logger
+		notify.WithLogger(log.New(os.Stdout, "notify: ", log.Flags())),
+	)
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -67,14 +88,8 @@ func main() {
 	}
 	log.Printf("sent notification id: %v", id)
 
-	// Listen for actions invoked!
-	actions := notifier.ActionInvoked()
-	go func() {
-		action := <-actions
-		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
-	}()
+	//outClosed := notifier.NotificationClosed()
 
-	closer := <-notifier.NotificationClosed()
-	log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
-
+	wg.Add(2)
+	wg.Wait()
 }

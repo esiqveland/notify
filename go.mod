@@ -1,8 +1,5 @@
 module github.com/esiqveland/notify
 
-go 1.12
+go 1.13
 
-require (
-	github.com/godbus/dbus v5.0.1+incompatible
-	github.com/godbus/dbus/v5 v5.0.3
-)
+require github.com/godbus/dbus/v5 v5.0.3
