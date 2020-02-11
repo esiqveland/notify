@@ -21,7 +21,7 @@ const (
 	callNotify                 = "org.freedesktop.Notifications.Notify"
 	callGetServerInformation   = "org.freedesktop.Notifications.GetServerInformation"
 
-	channelBufferSize = 10
+	channelBufferSize = 2
 )
 
 // Notification holds all information needed for creating a notification
@@ -229,7 +229,7 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 		val(n)
 	}
 
-	// add a listener in dbus for signals to Notification interface.
+	// add a listener (matcher) in dbus for signals to Notification interface.
 	err := n.conn.AddMatchSignal(
 		dbus.WithMatchObjectPath(dbusObjectPath),
 		dbus.WithMatchInterface(dbusNotificationsInterface),
@@ -237,12 +237,11 @@ func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	if err != nil {
 		return nil, err
 	}
+	// register in dbus for signal delivery
+	n.conn.Signal(n.signal)
 
 	// start eventloop
 	go n.eventLoop()
-
-	// register in dbus for signal delivery
-	n.conn.Signal(n.signal)
 
 	return n, nil
 }
