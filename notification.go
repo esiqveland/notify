@@ -130,19 +130,21 @@ func GetCapabilities(conn *dbus.Conn) ([]string, error) {
 	return ret, nil
 }
 
-// Notifier is an interface for implementing the operations supported by the
-// freedesktop DBus Notifications object.
+// Notifier is an interface implementing the operations supported by the
+// Freedesktop DBus Notifications object.
 //
 // New() sets up a Notifier that listens on dbus' signals regarding
 // Notifications: NotificationClosed and ActionInvoked.
 //
-// Note this also means the caller MUST consume output from these channels,
-// given in methods NotificationClosed() and ActionInvoked().
-// Users that only want to send a simple notification, but don't care about
-// interactions, see exported method: SendNotification(conn, Notification)
+// Signal delivery works by subscribing to all signals regarding Notifications,
+// which means you will see signals for Notifications also from other sources,
+// not just the latest you sent
 //
-// Caller is also responsible to call Close() before exiting,
-// to shut down event loop and cleanup.
+// Users that only want to send a simple notification, but don't care about
+// interacting with signals, can use exported method: SendNotification(conn, Notification)
+//
+// Caller is responsible for calling Close() before exiting,
+// to shut down event loop and cleanup dbus registration.
 type Notifier interface {
 	SendNotification(n Notification) (uint32, error)
 	GetCapabilities() ([]string, error)
@@ -154,10 +156,11 @@ type Notifier interface {
 // NotificationClosedHandler is called when we receive a NotificationClosed signal
 type NotificationClosedHandler func(*NotificationClosedSignal)
 
-// ActionInvokedHandler is called when we receive a signal that one of the actions passed was invoked.
+// ActionInvokedHandler is called when we receive a signal that one of the action_keys was invoked.
 //
 // Note that invoking an action often also produces a NotificationClosedSignal,
 // so you might receive both a Closed signal and a ActionInvoked signal.
+//
 // I suspect this detail is implementation specific for the UI interaction,
 // and does at least happen on XFCE4.
 type ActionInvokedHandler func(*ActionInvokedSignal)
