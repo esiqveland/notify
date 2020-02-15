@@ -13,11 +13,19 @@ import (
 func main() {
 	wg := &sync.WaitGroup{}
 
-	conn, err := dbus.SessionBus()
+	conn, err := dbus.SessionBusPrivate()
 	if err != nil {
 		panic(err)
 	}
+	defer conn.Close()
 
+	if err = conn.Auth(nil); err != nil {
+		panic(err)
+	}
+
+	if err = conn.Hello(); err != nil {
+		panic(err)
+	}
 	// Basic usage
 	// Create a Notification to send
 	iconName := "mail-unread"
