@@ -1,6 +1,6 @@
 # notify
 
-[![GoDoc](https://godoc.org/github.com/esiqveland/notify?status.svg)](https://godoc.org/github.com/esiqveland/notify)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/esiqveland/notify?tab=doc)
 [![CircleCI](https://circleci.com/gh/esiqveland/notify.svg?style=svg)](https://circleci.com/gh/esiqveland/notify)
 
 Notify is a go library for interacting with the dbus notification service defined by freedesktop.org:
