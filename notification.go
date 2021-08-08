@@ -43,6 +43,7 @@ type Notification struct {
 	ExpireTimeout time.Duration
 }
 
+// Action holds key and label for user action buttons.
 type Action struct {
 	Key   string
 	Label string
