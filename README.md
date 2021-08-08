@@ -46,4 +46,5 @@ Thanks to user [emersion](https://github.com/emersion) for great ideas on receiv
 
 ## License
 
-GPLv3
+BSD 3-Clause
+
