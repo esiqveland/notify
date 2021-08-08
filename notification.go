@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/godbus/dbus/v5"
 )
@@ -38,8 +39,8 @@ type Notification struct {
 	// Actions are tuples of (action_key, label), e.g.: []Action{"cancel", "Cancel", "open", "Open"}
 	Actions []Action
 	Hints   map[string]dbus.Variant
-	// ExpireTimeout: milliseconds to show notification
-	ExpireTimeout int32
+	// ExpireTimeout: duration to show notification
+	ExpireTimeout time.Duration
 }
 
 type Action struct {
@@ -56,6 +57,8 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 		actions = append(actions, note.Actions[i].Key, note.Actions[i].Label)
 	}
 
+	durationMs := int32(note.ExpireTimeout.Milliseconds())
+
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
 	call := obj.Call(callNotify, 0,
 		note.AppName,
@@ -65,7 +68,7 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 		note.Body,
 		actions,
 		note.Hints,
-		note.ExpireTimeout)
+		durationMs)
 	if call.Err != nil {
 		return 0, fmt.Errorf("error sending notification: %w", call.Err)
 	}

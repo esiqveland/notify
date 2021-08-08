@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus/v5"
@@ -41,7 +42,7 @@ func main() {
 			{Key: "open", Label: "Open"},
 		},
 		Hints:         map[string]dbus.Variant{},
-		ExpireTimeout: int32(5000),
+		ExpireTimeout: time.Second * 5,
 	}
 
 	// Ship it!
