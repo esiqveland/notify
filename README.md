@@ -17,6 +17,7 @@ Depends on:
  - [godbus](https://github.com/godbus/dbus).
 
 ## Changelog
+- v0.11.0: re-release under BSD license
 - v0.10.0: stricter types: [some breaking changes](https://github.com/esiqveland/notify/releases/tag/v0.10.0)
 - v0.9.0: [some breaking changes](https://github.com/esiqveland/notify/releases/tag/v0.9.0)
 - v0.2.1: dbus: gomod: lock to dbus v5
