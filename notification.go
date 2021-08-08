@@ -35,19 +35,25 @@ type Notification struct {
 	AppIcon string
 	Summary string
 	Body    string
-	// Actions are tuples of (action_key, label), e.g.: []string{"cancel", "Cancel", "open", "Open"}
-	Actions []string
+	// Actions are tuples of (action_key, label), e.g.: []Action{"cancel", "Cancel", "open", "Open"}
+	Actions []Action
 	Hints   map[string]dbus.Variant
 	// ExpireTimeout: milliseconds to show notification
 	ExpireTimeout int32
 }
 
+type Action struct {
+	Key   string
+	Label string
+}
+
 // SendNotification is provided for convenience.
-// Use if you only want to deliver a notification and dont care about events.
+// Use if you only want to deliver a notification and do not care about actions or events.
 func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
-	actions := len(note.Actions)
-	if (actions % 2) != 0 {
-		return 0, errors.New("actions must be pairs of (key, label)")
+	actions := []string{}
+
+	for i := range note.Actions {
+		actions = append(actions, note.Actions[i].Key, note.Actions[i].Label)
 	}
 
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
@@ -57,7 +63,7 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 		note.AppIcon,
 		note.Summary,
 		note.Body,
-		note.Actions,
+		actions,
 		note.Hints,
 		note.ExpireTimeout)
 	if call.Err != nil {

@@ -26,16 +26,20 @@ func main() {
 	if err = conn.Hello(); err != nil {
 		panic(err)
 	}
+
 	// Basic usage
 	// Create a Notification to send
 	iconName := "mail-unread"
 	n := notify.Notification{
-		AppName:       "Test GO App",
-		ReplacesID:    uint32(0),
-		AppIcon:       iconName,
-		Summary:       "Test",
-		Body:          "This is a test of the DBus bindings for go.",
-		Actions:       []string{"cancel", "Cancel", "open", "Open"}, // tuples of (action_key, label)
+		AppName:    "Test GO App",
+		ReplacesID: uint32(0),
+		AppIcon:    iconName,
+		Summary:    "Test",
+		Body:       "This is a test of the DBus bindings for go.",
+		Actions: []notify.Action{
+			{Key: "cancel", Label: "Cancel"},
+			{Key: "open", Label: "Open"},
+		},
 		Hints:         map[string]dbus.Variant{},
 		ExpireTimeout: int32(5000),
 	}
