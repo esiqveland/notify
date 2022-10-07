@@ -271,6 +271,9 @@ func (n notifier) eventLoop(done <-chan struct{}) {
 
 // signal handler that translates and sends notifications to channels
 func (n notifier) handleSignal(signal *dbus.Signal) {
+	if signal == nil {
+		return
+	}
 	switch signal.Name {
 	case signalNotificationClosed:
 		nc := &NotificationClosedSignal{
