@@ -187,11 +187,10 @@ type ActionInvokedSignal struct {
 type notifier struct {
 	conn     *dbus.Conn
 	signal   chan *dbus.Signal
-	done     chan bool
 	onClosed NotificationClosedHandler
 	onAction ActionInvokedHandler
-	wg       *sync.WaitGroup
 	log      logger
+	group    *group
 }
 
 type logger interface {
@@ -228,11 +227,10 @@ func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 	n := &notifier{
 		conn:     conn,
 		signal:   make(chan *dbus.Signal, channelBufferSize),
-		done:     make(chan bool),
-		wg:       &sync.WaitGroup{},
 		onClosed: func(s *NotificationClosedSignal) {},
 		onAction: func(s *ActionInvokedSignal) {},
 		log:      &loggerWrapper{"notify: "},
+		group:    newGroup(),
 	}
 
 	for _, val := range opts {
@@ -251,19 +249,17 @@ func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 	n.conn.Signal(n.signal)
 
 	// start eventloop
-	go n.eventLoop()
+	n.group.Go(n.eventLoop)
 
 	return n, nil
 }
 
-func (n notifier) eventLoop() {
-	n.wg.Add(1)
-	defer n.wg.Done()
+func (n notifier) eventLoop(done <-chan struct{}) {
 	for {
 		select {
 		case signal := <-n.signal:
 			n.handleSignal(signal)
-		case <-n.done:
+		case <-done:
 			n.log.Printf("Got Close() signal, shutting down...")
 			return
 		}
@@ -388,25 +384,19 @@ func (r Reason) String() string {
 	}
 }
 
-// Close cleans up and shuts down signal delivery loop
+// Close cleans up and shuts down signal delivery loop. It is safe to be called
+// multiple times.
 func (n *notifier) Close() error {
-	n.done <- true
+	return n.group.Close(func() error {
+		// remove signal reception
+		n.conn.RemoveSignal(n.signal)
 
-	// remove signal reception
-	n.conn.RemoveSignal(n.signal)
-
-	// unregister in dbus:
-	errRemoveMatch := n.conn.RemoveMatchSignal(
-		dbus.WithMatchObjectPath(dbusObjectPath),
-		dbus.WithMatchInterface(dbusNotificationsInterface),
-	)
-
-	close(n.done)
-
-	// wait for eventloop to shut down...
-	n.wg.Wait()
-
-	return errRemoveMatch
+		// unregister in dbus:
+		return n.conn.RemoveMatchSignal(
+			dbus.WithMatchObjectPath(dbusObjectPath),
+			dbus.WithMatchInterface(dbusNotificationsInterface),
+		)
+	})
 }
 
 type loggerWrapper struct {
@@ -415,4 +405,38 @@ type loggerWrapper struct {
 
 func (l *loggerWrapper) Printf(format string, v ...interface{}) {
 	log.Printf(l.prefix+format, v...)
+}
+
+// group abstracts away shutdown logic for the event loop.
+type group struct {
+	wg        sync.WaitGroup
+	closeOnce sync.Once
+	done      chan struct{}
+	err       error
+}
+
+func newGroup() *group {
+	return &group{
+		done: make(chan struct{}),
+	}
+}
+
+// Go runs f in a new goroutine. done is closed as a signal for f to shut down.
+// g.Close waits for f to finish before returning.
+func (g *group) Go(f func(done <-chan struct{})) {
+	g.wg.Add(1)
+	defer g.wg.Done()
+	go f(g.done)
+}
+
+// Close signals all goroutines started by g to shut down and waits for them to
+// finish. It then calls f for further clean up. It is safe to be called
+// multiple times.
+func (g *group) Close(f func() error) error {
+	g.closeOnce.Do(func() {
+		close(g.done)
+		g.wg.Wait()
+		g.err = f()
+	})
+	return g.err
 }
