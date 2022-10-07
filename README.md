@@ -2,6 +2,7 @@
 
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/esiqveland/notify?tab=doc)
 [![Go Report Card](https://goreportcard.com/badge/github.com/esiqveland/notify)](https://goreportcard.com/report/github.com/esiqveland/notify)
+![Build](https://github.com/esiqveland/notify/actions/workflows/go.yml/badge.svg?branch=master)
 
 Notify is a go library for interacting with the dbus notification service defined by freedesktop.org:
 https://developer.gnome.org/notification-spec/
