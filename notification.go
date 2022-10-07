@@ -61,7 +61,9 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 	durationMs := int32(note.ExpireTimeout.Milliseconds())
 
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
-	call := obj.Call(callNotify, 0,
+	call := obj.Call(
+		callNotify,
+		0,
 		note.AppName,
 		note.ReplacesID,
 		note.AppIcon,
@@ -69,7 +71,8 @@ func SendNotification(conn *dbus.Conn, note Notification) (uint32, error) {
 		note.Body,
 		actions,
 		note.Hints,
-		durationMs)
+		durationMs,
+	)
 	if call.Err != nil {
 		return 0, fmt.Errorf("error sending notification: %w", call.Err)
 	}
