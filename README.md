@@ -17,6 +17,7 @@ Depends on:
  - [godbus](https://github.com/godbus/dbus).
 
 ## Changelog
+- v0.11.1: Fix a race during Close() #11
 - v0.11.0: re-release under BSD license
 - v0.10.0: stricter types: [some breaking changes](https://github.com/esiqveland/notify/releases/tag/v0.10.0)
 - v0.9.0: [some breaking changes](https://github.com/esiqveland/notify/releases/tag/v0.9.0)
@@ -43,6 +44,8 @@ The Gnome notification spec https://developer.gnome.org/notification-spec/.
 
 ## Contributors
 Thanks to user [emersion](https://github.com/emersion) for great ideas on receiving signals.
+
+Thanks to [Merovius](https://github.com/Merovius) for fixing race during Close().
 
 ## License
 
