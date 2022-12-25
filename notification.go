@@ -39,9 +39,15 @@ type Notification struct {
 	// Actions are tuples of (action_key, label), e.g.: []Action{"cancel", "Cancel", "open", "Open"}
 	Actions []Action
 	Hints   map[string]dbus.Variant
-	// ExpireTimeout: duration to show notification
+	// ExpireTimeout: duration to show notification. See also ExpireTimeoutSetByNotificationServer and ExpireTimeoutNever.
 	ExpireTimeout time.Duration
 }
+
+// ExpireTimeoutSetByNotificationServer used as ExpireTimeout to leave expiration up to the notification server.
+// Expiration is sent as number of millis.
+// When -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
+const ExpireTimeoutSetByNotificationServer = time.Millisecond * -1
+const ExpireTimeoutNever time.Duration = 0
 
 // Action holds key and label for user action buttons.
 type Action struct {
