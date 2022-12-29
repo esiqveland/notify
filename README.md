@@ -17,6 +17,7 @@ Depends on:
  - [godbus](https://github.com/godbus/dbus).
 
 ## Changelog
+- v0.11.2: Introduce helpers ExpireTimeoutSetByNotificationServer, ExpireTimeoutNever
 - v0.11.1: Fix a race during Close() #11
 - v0.11.0: re-release under BSD license
 - v0.10.0: stricter types: [some breaking changes](https://github.com/esiqveland/notify/releases/tag/v0.10.0)
