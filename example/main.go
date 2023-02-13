@@ -29,6 +29,11 @@ func main() {
 	}
 
 	// Basic usage
+	sndVariant := notify.SoundWithName(
+		//"message-new-instant",
+		"trash-empty",
+	)
+
 	// Create a Notification to send
 	iconName := "mail-unread"
 	n := notify.Notification{
@@ -36,12 +41,14 @@ func main() {
 		ReplacesID: uint32(0),
 		AppIcon:    iconName,
 		Summary:    "Test",
-		Body:       "This is a test of the DBus bindings for go.",
+		Body:       "This is a test of the DBus bindings for go with sound.",
 		Actions: []notify.Action{
 			{Key: "cancel", Label: "Cancel"},
 			{Key: "open", Label: "Open"},
 		},
-		Hints:         map[string]dbus.Variant{},
+		Hints: map[string]dbus.Variant{
+			sndVariant.ID: sndVariant.Variant,
+		},
 		ExpireTimeout: time.Second * 5,
 	}
 

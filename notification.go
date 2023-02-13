@@ -25,6 +25,19 @@ const (
 	channelBufferSize = 10
 )
 
+// See: https://specifications.freedesktop.org/notification-spec/latest/ar01s08.html
+type Variant struct {
+	ID      string
+	Variant dbus.Variant
+}
+
+func SoundWithName(soundName string) *Variant {
+    return &Variant{
+        ID:      "sound-name",
+        Variant: dbus.MakeVariant(soundName),
+        }
+}
+
 // Notification holds all information needed for creating a notification
 type Notification struct {
 	AppName string
