@@ -279,7 +279,11 @@ func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 func (n notifier) eventLoop(done <-chan struct{}) {
 	for {
 		select {
-		case signal := <-n.signal:
+		case signal, ok := <-n.signal:
+			if !ok {
+				n.log.Printf("Signal channel closed, shutting down...")
+				return
+			}
 			n.handleSignal(signal)
 		case <-done:
 			n.log.Printf("Got Close() signal, shutting down...")
