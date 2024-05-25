@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/esiqveland/notify"
 	"github.com/godbus/dbus/v5"
+
+	"github.com/esiqveland/notify"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 	}
 
 	// Basic usage
-	sndVariant := notify.SoundWithName(
+	sndVariant := notify.HintSoundWithName(
 		//"message-new-instant",
 		"trash-empty",
 	)
@@ -51,6 +52,8 @@ func main() {
 		},
 		ExpireTimeout: time.Second * 5,
 	}
+	n.SetUrgency(notify.UrgencyCritical)
+
 
 	// Ship it!
 	createdID, err := notify.SendNotification(conn, n)

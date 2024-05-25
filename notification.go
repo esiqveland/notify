@@ -76,13 +76,15 @@ type Notification struct {
 	ExpireTimeout time.Duration
 }
 
-func (n *Notification) SetUrgency(urgency Urgency) *Notification {
+func (n *Notification) SetUrgency(urgency Urgency) {
+	n.AddHint(HintUrgency(urgency))
+}
+
+func (n *Notification) AddHint(hint Hint) {
 	if n.Hints == nil {
 		n.Hints = map[string]dbus.Variant{}
 	}
-	h := HintUrgency(urgency)
-	n.Hints[h.ID] = h.Variant
-	return n
+	n.Hints[hint.ID] = hint.Variant
 }
 
 // ExpireTimeoutSetByNotificationServer used as ExpireTimeout to leave expiration up to the notification server.
