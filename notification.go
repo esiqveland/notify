@@ -57,7 +57,6 @@ const (
 	UrgencyNormal   Urgency = 1
 	UrgencyCritical Urgency = 2
 )
-}
 
 // Notification holds all information needed for creating a notification
 type Notification struct {
