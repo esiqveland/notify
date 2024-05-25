@@ -25,17 +25,38 @@ const (
 	channelBufferSize = 10
 )
 
+// Deprecated: use Hint
+type Variant = Hint
+
 // See: https://specifications.freedesktop.org/notification-spec/latest/ar01s08.html
-type Variant struct {
+type Hint struct {
 	ID      string
 	Variant dbus.Variant
 }
 
-func SoundWithName(soundName string) *Variant {
-    return &Variant{
-        ID:      "sound-name",
-        Variant: dbus.MakeVariant(soundName),
-        }
+type Hints map[string]dbus.Variant
+
+func HintSoundWithName(soundName string) Hint {
+	return Hint{
+		ID:      "sound-name",
+		Variant: dbus.MakeVariant(soundName),
+	}
+}
+
+func HintUrgency(urgency Urgency) Hint {
+	return Hint{
+		ID:      "urgency",
+		Variant: dbus.MakeVariant(byte(urgency)),
+	}
+}
+
+type Urgency byte
+
+const (
+	UrgencyLow      Urgency = 0
+	UrgencyNormal   Urgency = 1
+	UrgencyCritical Urgency = 2
+)
 }
 
 // Notification holds all information needed for creating a notification
@@ -54,6 +75,15 @@ type Notification struct {
 	Hints   map[string]dbus.Variant
 	// ExpireTimeout: duration to show notification. See also ExpireTimeoutSetByNotificationServer and ExpireTimeoutNever.
 	ExpireTimeout time.Duration
+}
+
+func (n *Notification) SetUrgency(urgency Urgency) *Notification {
+	if n.Hints == nil {
+		n.Hints = map[string]dbus.Variant{}
+	}
+	h := HintUrgency(urgency)
+	n.Hints[h.ID] = h.Variant
+	return n
 }
 
 // ExpireTimeoutSetByNotificationServer used as ExpireTimeout to leave expiration up to the notification server.
