@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"image/draw"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"os"
 	"sync"
@@ -62,7 +66,6 @@ func runMain() error {
 	}
 	n.SetUrgency(notify.UrgencyCritical)
 
-
 	// Ship it!
 	createdID, err := notify.SendNotification(conn, n)
 	if err != nil {
@@ -109,7 +112,7 @@ func runMain() error {
 		notify.WithLogger(log.New(os.Stdout, "notify: ", log.Flags())),
 	)
 	if err != nil {
-		log.Fatalln(err.Error())
+		return err
 	}
 	defer notifier.Close()
 
@@ -123,4 +126,26 @@ func runMain() error {
 
 	wg.Add(2)
 	wg.Wait()
+
+func readImage(path string) (*image.RGBA, error) {
+	fd, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer fd.Close()
+	decode, _, err := image.Decode(fd)
+	if err != nil {
+		return nil, err
+	}
+	img, ok := decode.(*image.RGBA)
+	if !ok {
+		b := decode.Bounds()
+		m := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+		draw.Draw(m, m.Bounds(), decode, b.Min, draw.Src)
+		return m, nil
+		//return nil, fmt.Errorf("decode RGBA failed of: %v", path)
+	}
+	return img, err
+}
+
 }
