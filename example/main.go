@@ -13,6 +13,14 @@ import (
 )
 
 func main() {
+	err := runMain()
+	if err != nil {
+		log.Printf("\nerror: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+func runMain() error {
 	wg := &sync.WaitGroup{}
 
 	conn, err := dbus.SessionBusPrivate()
