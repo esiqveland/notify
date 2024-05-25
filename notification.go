@@ -116,14 +116,13 @@ type ServerInformation struct {
 //
 // org.freedesktop.Notifications.GetServerInformation
 //
-//  GetServerInformation Return Values
+//	 GetServerInformation Return Values
 //
-//		Name		 Type	  Description
-//		name		 STRING	  The product name of the server.
-//		vendor		 STRING	  The vendor name. For example, "KDE," "GNOME," "freedesktop.org," or "Microsoft."
-//		version		 STRING	  The server's version number.
-//		spec_version STRING	  The specification version the server is compliant with.
-//
+//			Name		 Type	  Description
+//			name		 STRING	  The product name of the server.
+//			vendor		 STRING	  The vendor name. For example, "KDE," "GNOME," "freedesktop.org," or "Microsoft."
+//			version		 STRING	  The server's version number.
+//			spec_version STRING	  The specification version the server is compliant with.
 func GetServerInformation(conn *dbus.Conn) (ServerInformation, error) {
 	obj := conn.Object(dbusNotificationsInterface, dbusObjectPath)
 	if obj == nil {
@@ -326,27 +325,27 @@ func (n *notifier) GetServerInformation() (ServerInformation, error) {
 //
 // Implements dbus call:
 //
-//     UINT32 org.freedesktop.Notifications.Notify (
-//	       STRING app_name,
-//	       UINT32 replaces_id,
-//	       STRING app_icon,
-//	       STRING summary,
-//	       STRING body,
-//	       ARRAY  actions,
-//	       DICT   hints,
-//	       INT32  expire_timeout
-//     );
+//	    UINT32 org.freedesktop.Notifications.Notify (
+//		       STRING app_name,
+//		       UINT32 replaces_id,
+//		       STRING app_icon,
+//		       STRING summary,
+//		       STRING body,
+//		       ARRAY  actions,
+//		       DICT   hints,
+//		       INT32  expire_timeout
+//	    );
 //
-//		Name	    	Type	Description
-//		app_name		STRING	The optional name of the application sending the notification. Can be blank.
-//		replaces_id	    UINT32	The optional notification ID that this notification replaces. The server must atomically (ie with no flicker or other visual cues) replace the given notification with this one. This allows clients to effectively modify the notification while it's active. A value of value of 0 means that this notification won't replace any existing notifications.
-//		app_icon		STRING	The optional program icon of the calling application. Can be an empty string, indicating no icon.
-//		summary		    STRING	The summary text briefly describing the notification.
-//		body			STRING	The optional detailed body text. Can be empty.
-//		actions		    ARRAY	Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
-//		hints	        DICT	Optional hints that can be passed to the server from the client program. Although clients and servers should never assume each other supports any specific hints, they can be used to pass along information, such as the process PID or window ID, that the server may be able to make use of. See Hints. Can be empty.
-//      expire_timeout  INT32   The timeout time in milliseconds since the display of the notification at which the notification should automatically close.
-//								If -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
+//			Name	    	Type	Description
+//			app_name		STRING	The optional name of the application sending the notification. Can be blank.
+//			replaces_id	    UINT32	The optional notification ID that this notification replaces. The server must atomically (ie with no flicker or other visual cues) replace the given notification with this one. This allows clients to effectively modify the notification while it's active. A value of value of 0 means that this notification won't replace any existing notifications.
+//			app_icon		STRING	The optional program icon of the calling application. Can be an empty string, indicating no icon.
+//			summary		    STRING	The summary text briefly describing the notification.
+//			body			STRING	The optional detailed body text. Can be empty.
+//			actions		    ARRAY	Actions are sent over as a list of pairs. Each even element in the list (starting at index 0) represents the identifier for the action. Each odd element in the list is the localized string that will be displayed to the user.
+//			hints	        DICT	Optional hints that can be passed to the server from the client program. Although clients and servers should never assume each other supports any specific hints, they can be used to pass along information, such as the process PID or window ID, that the server may be able to make use of. See Hints. Can be empty.
+//			expire_timeout  INT32   The timeout time in milliseconds since the display of the notification at which the notification should automatically close.
+//									If -1, the notification's expiration time is dependent on the notification server's settings, and may vary for the type of notification. If 0, never expire.
 //
 // If replaces_id is 0, the return value is a UINT32 that represent the notification.
 // It is unique, and will not be reused unless a MAXINT number of notifications have been generated.
