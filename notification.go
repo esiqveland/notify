@@ -3,6 +3,7 @@ package notify
 import (
 	"errors"
 	"fmt"
+	"image"
 	"log"
 	"sync"
 	"time"
@@ -57,6 +58,44 @@ const (
 	UrgencyNormal   Urgency = 1
 	UrgencyCritical Urgency = 2
 )
+
+// HintImageFilePath sends a filepath to the notification server as the file of the icon.
+// See also: https://specifications.freedesktop.org/notification-spec/latest/ar01s05.html
+func HintImageFilePath(imageAbsolutePath string) Hint {
+	uri := fmt.Sprintf("file://%s", imageAbsolutePath)
+	return Hint{
+		ID:      "image-path",
+		Variant: dbus.MakeVariant(uri),
+	}
+}
+
+// dbusImageData encodes Hint for "image-data" iiibiiay
+// Data format: https://specifications.freedesktop.org/notification-spec/latest/ar01s05.html
+type dbusImageData struct {
+	Width         int    // i
+	Height        int    // i
+	RowStride     int    // i
+	HasAlpha      bool   // b
+	BitsPerSample int    // i
+	Samples       int    // i
+	Image         []byte // ay
+}
+
+func HintImageDataRGBA(img *image.RGBA) Hint {
+	imageData := dbusImageData{
+		Width:         img.Rect.Max.X,
+		Height:        img.Rect.Max.Y,
+		RowStride:     img.Stride,
+		HasAlpha:      true,
+		BitsPerSample: 8,
+		Samples:       4,
+		Image:         img.Pix,
+	}
+	return Hint{
+		ID:      "image-data",
+		Variant: dbus.MakeVariant(imageData),
+	}
+}
 
 // Notification holds all information needed for creating a notification
 type Notification struct {
@@ -306,7 +345,7 @@ func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 	return n, nil
 }
 
-func (n notifier) eventLoop(done <-chan struct{}) {
+func (n *notifier) eventLoop(done <-chan struct{}) {
 	for {
 		select {
 		case signal, ok := <-n.signal:
@@ -323,7 +362,7 @@ func (n notifier) eventLoop(done <-chan struct{}) {
 }
 
 // signal handler that translates and sends notifications to channels
-func (n notifier) handleSignal(signal *dbus.Signal) {
+func (n *notifier) handleSignal(signal *dbus.Signal) {
 	if signal == nil {
 		return
 	}

@@ -8,7 +8,9 @@ import (
 	_ "image/png"
 	"log"
 	"os"
+	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -41,8 +43,10 @@ func runMain() error {
 		panic(err)
 	}
 
+	DebugServerFeatures(conn)
+
 	// Basic usage
-	sndVariant := notify.HintSoundWithName(
+	soundHint := notify.HintSoundWithName(
 		//"message-new-instant",
 		"trash-empty",
 	)
@@ -60,19 +64,76 @@ func runMain() error {
 			{Key: "open", Label: "Open"},
 		},
 		Hints: map[string]dbus.Variant{
-			sndVariant.ID: sndVariant.Variant,
+			soundHint.ID: soundHint.Variant,
 		},
 		ExpireTimeout: time.Second * 5,
 	}
 	n.SetUrgency(notify.UrgencyCritical)
 
-	// Ship it!
-	createdID, err := notify.SendNotification(conn, n)
-	if err != nil {
-		log.Printf("error sending notification: %v", err.Error())
+	counter := &atomic.Int32{}
+	// Listen for actions invoked!
+	onAction := func(action *notify.ActionInvokedSignal) {
+		counter.Add(1)
+		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
+		wg.Done()
 	}
-	log.Printf("created notification with id: %v", createdID)
 
+	onClosed := func(closer *notify.NotificationClosedSignal) {
+		counter.Add(1)
+		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
+		wg.Done()
+	}
+
+	// Notifier instance with event delivery:
+	notifier, err := notify.New(
+		conn,
+		// action event handler
+		notify.WithOnAction(onAction),
+		// closed event handler
+		notify.WithOnClosed(onClosed),
+		// override with custom logger
+		notify.WithLogger(log.New(os.Stdout, "notify: ", log.Flags())),
+	)
+	if err != nil {
+		return err
+	}
+	defer notifier.Close()
+
+	rgbaSample, err := readImage("./big.jpg")
+	if err != nil {
+		return err
+	}
+
+	absFilePath, err := filepath.Abs("./small.png")
+	if err != nil {
+		return err
+	}
+	hintProfileImage := notify.HintImageDataRGBA(rgbaSample)
+	hintImageByPath := notify.HintImageFilePath(absFilePath)
+	urgencyHint := notify.HintUrgency(notify.UrgencyCritical)
+	n.AddHint(urgencyHint)
+	n.AddHint(hintImageByPath)
+	// according to spec, image-data hint should have precedence:
+	n.AddHint(hintProfileImage)
+
+	wg.Add(1)
+	id, err := notifier.SendNotification(n)
+	if err != nil {
+		log.Printf("error sending notification: %v", err)
+	}
+	log.Printf("sent notification id: %v", id)
+
+	// add two extra so the process should block forever:
+	// this is due to a bug in Gnome that delivers multiple copies of the action signal...
+	wg.Add(2)
+	wg.Wait()
+
+	log.Printf("total signal count received: %d", counter.Load())
+
+	return nil
+}
+
+func DebugServerFeatures(conn *dbus.Conn) {
 	// List server features!
 	caps, err := notify.GetCapabilities(conn)
 	if err != nil {
@@ -90,42 +151,7 @@ func runMain() error {
 	fmt.Printf("Vendor:  %v\n", info.Vendor)
 	fmt.Printf("Version: %v\n", info.Version)
 	fmt.Printf("Spec:    %v\n", info.SpecVersion)
-
-	// Listen for actions invoked!
-	onAction := func(action *notify.ActionInvokedSignal) {
-		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
-		wg.Done()
-	}
-
-	onClosed := func(closer *notify.NotificationClosedSignal) {
-		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
-	}
-
-	// Notifier interface with event delivery
-	notifier, err := notify.New(
-		conn,
-		// action event handler
-		notify.WithOnAction(onAction),
-		// closed event handler
-		notify.WithOnClosed(onClosed),
-		// override with custom logger
-		notify.WithLogger(log.New(os.Stdout, "notify: ", log.Flags())),
-	)
-	if err != nil {
-		return err
-	}
-	defer notifier.Close()
-
-	id, err := notifier.SendNotification(n)
-	if err != nil {
-		log.Printf("error sending notification: %v", err)
-	}
-	log.Printf("sent notification id: %v", id)
-
-	//outClosed := notifier.NotificationClosed()
-
-	wg.Add(2)
-	wg.Wait()
+}
 
 func readImage(path string) (*image.RGBA, error) {
 	fd, err := os.Open(path)
@@ -146,6 +172,4 @@ func readImage(path string) (*image.RGBA, error) {
 		//return nil, fmt.Errorf("decode RGBA failed of: %v", path)
 	}
 	return img, err
-}
-
 }
