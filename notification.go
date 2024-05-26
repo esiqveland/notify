@@ -35,8 +35,6 @@ type Hint struct {
 	Variant dbus.Variant
 }
 
-type Hints map[string]dbus.Variant
-
 func HintSoundWithName(soundName string) Hint {
 	return Hint{
 		ID:      "sound-name",
