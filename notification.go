@@ -72,20 +72,20 @@ func HintImageFilePath(imageAbsolutePath string) Hint {
 // dbusImageData encodes Hint for "image-data" iiibiiay
 // Data format: https://specifications.freedesktop.org/notification-spec/latest/ar01s05.html
 type dbusImageData struct {
-	Width         int    // i
-	Height        int    // i
-	RowStride     int    // i
+	Width         int32  // i
+	Height        int32  // i
+	RowStride     int32  // i
 	HasAlpha      bool   // b
-	BitsPerSample int    // i
-	Samples       int    // i
+	BitsPerSample int32  // i
+	Samples       int32  // i
 	Image         []byte // ay
 }
 
 func HintImageDataRGBA(img *image.RGBA) Hint {
 	imageData := dbusImageData{
-		Width:         img.Rect.Max.X,
-		Height:        img.Rect.Max.Y,
-		RowStride:     img.Stride,
+		Width:         int32(img.Rect.Max.X),
+		Height:        int32(img.Rect.Max.Y),
+		RowStride:     int32(img.Stride),
 		HasAlpha:      true,
 		BitsPerSample: 8,
 		Samples:       4,
