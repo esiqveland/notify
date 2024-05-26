@@ -70,16 +70,16 @@ func runMain() error {
 	}
 	n.SetUrgency(notify.UrgencyCritical)
 
-	counter := &atomic.Int32{}
+	counter := int32(0)
 	// Listen for actions invoked!
 	onAction := func(action *notify.ActionInvokedSignal) {
-		counter.Add(1)
+		atomic.AddInt32(&counter, 1)
 		log.Printf("ActionInvoked: %v Key: %v", action.ID, action.ActionKey)
 		wg.Done()
 	}
 
 	onClosed := func(closer *notify.NotificationClosedSignal) {
-		counter.Add(1)
+		atomic.AddInt32(&counter, 1)
 		log.Printf("NotificationClosed: %v Reason: %v", closer.ID, closer.Reason)
 		wg.Done()
 	}
@@ -128,7 +128,7 @@ func runMain() error {
 	wg.Add(2)
 	wg.Wait()
 
-	log.Printf("total signal count received: %d", counter.Load())
+	log.Printf("total signal count received: %d", atomic.LoadInt32(&counter))
 
 	return nil
 }
