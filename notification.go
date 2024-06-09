@@ -132,8 +132,17 @@ const ExpireTimeoutNever time.Duration = 0
 
 // Action holds key and label for user action buttons.
 type Action struct {
-	Key   string
+	// Key is the identifier for the action, used for signaling back which action was selected
+	Key string
+	// Label is the localized string that will be displayed to the user
 	Label string
+}
+
+// NewDefaultAction creates a new default action.
+// The default action is usually invoked by clicking on the notification.
+// The label can be anything, but implementations are free whether to display it.
+func NewDefaultAction(label string) Action {
+	return Action{Key: "default", Label: label}
 }
 
 // SendNotification is provided for convenience.
