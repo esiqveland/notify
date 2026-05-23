@@ -5,7 +5,7 @@
 ![Build](https://github.com/esiqveland/notify/actions/workflows/go.yml/badge.svg?branch=master)
 
 Notify is a go library for interacting with the dbus notification service defined by freedesktop.org:
-https://developer.gnome.org/notification-spec/
+https://specifications.freedesktop.org/notification/latest/
 
 `notify` can deliver desktop notifications over dbus, ala how libnotify does it.
 
