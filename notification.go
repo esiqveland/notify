@@ -287,11 +287,11 @@ type notifier struct {
 	signal   chan *dbus.Signal
 	onClosed NotificationClosedHandler
 	onAction ActionInvokedHandler
-	log      logger
+	log      Logger
 	group    *group
 }
 
-type logger interface {
+type Logger interface {
 	Printf(format string, v ...interface{})
 }
 
@@ -299,7 +299,7 @@ type logger interface {
 type Option func(*notifier)
 
 // WithLogger sets a new logger func
-func WithLogger(logz logger) Option {
+func WithLogger(logz Logger) Option {
 	return func(n *notifier) {
 		n.log = logz
 	}
