@@ -327,7 +327,7 @@ func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
 		signal:   make(chan *dbus.Signal, channelBufferSize),
 		onClosed: func(s *NotificationClosedSignal) {},
 		onAction: func(s *ActionInvokedSignal) {},
-		log:      &loggerWrapper{"notify: "},
+		log:      noopLogger{},
 		group:    newGroup(),
 	}
 
@@ -504,11 +504,15 @@ func (n *notifier) Close() error {
 	})
 }
 
-type loggerWrapper struct {
+type noopLogger struct{}
+
+func (n noopLogger) Printf(format string, v ...interface{}) {}
+
+type stdLogger struct {
 	prefix string
 }
 
-func (l *loggerWrapper) Printf(format string, v ...interface{}) {
+func (l *stdLogger) Printf(format string, v ...interface{}) {
 	log.Printf(l.prefix+format, v...)
 }
 
