@@ -295,25 +295,25 @@ type logger interface {
 	Printf(format string, v ...interface{})
 }
 
-// option overrides certain parts of a Notifier
-type option func(*notifier)
+// Option overrides certain parts of a Notifier
+type Option func(*notifier)
 
 // WithLogger sets a new logger func
-func WithLogger(logz logger) option {
+func WithLogger(logz logger) Option {
 	return func(n *notifier) {
 		n.log = logz
 	}
 }
 
 // WithOnAction sets ActionInvokedHandler handler
-func WithOnAction(h ActionInvokedHandler) option {
+func WithOnAction(h ActionInvokedHandler) Option {
 	return func(n *notifier) {
 		n.onAction = h
 	}
 }
 
 // WithOnClosed sets NotificationClosed handler
-func WithOnClosed(h NotificationClosedHandler) option {
+func WithOnClosed(h NotificationClosedHandler) Option {
 	return func(n *notifier) {
 		n.onClosed = h
 	}
@@ -321,7 +321,7 @@ func WithOnClosed(h NotificationClosedHandler) option {
 
 // New creates a new Notifier using conn.
 // See also: Notifier
-func New(conn *dbus.Conn, opts ...option) (Notifier, error) {
+func New(conn *dbus.Conn, opts ...Option) (Notifier, error) {
 	n := &notifier{
 		conn:     conn,
 		signal:   make(chan *dbus.Signal, channelBufferSize),
