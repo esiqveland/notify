@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=esiqveland&project=notify&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 # notify
 
 [![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/esiqveland/notify?tab=doc)
